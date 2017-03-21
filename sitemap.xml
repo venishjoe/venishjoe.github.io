@@ -155,14 +155,14 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/j2ee/</loc>
+    <loc>http://venishjoe.net/tags/j2ee/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/j2ee/</loc>
+    <loc>http://venishjoe.net/categories/j2ee/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
@@ -218,15 +218,15 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/network/</loc>
-    <lastmod>2009-10-13T22:45:00+00:00</lastmod>
+    <loc>http://venishjoe.net/tags/network/</loc>
+    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/network/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <loc>http://venishjoe.net/categories/network/</loc>
+    <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -253,14 +253,14 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/performance/</loc>
+    <loc>http://venishjoe.net/tags/performance/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/performance/</loc>
+    <loc>http://venishjoe.net/categories/performance/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
@@ -288,14 +288,14 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/reverse-engineering/</loc>
+    <loc>http://venishjoe.net/tags/reverse-engineering/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/reverse-engineering/</loc>
+    <loc>http://venishjoe.net/categories/reverse-engineering/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
@@ -309,14 +309,14 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/security/</loc>
+    <loc>http://venishjoe.net/tags/security/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/security/</loc>
+    <loc>http://venishjoe.net/categories/security/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
@@ -351,14 +351,14 @@
   </url>
   
   <url>
-    <loc>http://venishjoe.net/categories/system/</loc>
+    <loc>http://venishjoe.net/tags/system/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>http://venishjoe.net/tags/system/</loc>
+    <loc>http://venishjoe.net/categories/system/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
