@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Server on VENISHJOE.NET</title>
+    <link>/tags/server/index.xml</link>
+    <description>Recent content in Server on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/server/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Simple Proxy Server in Java</title>
+      <link>/post/simple-proxy-server-in-java/</link>
+      <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/simple-proxy-server-in-java/</guid>
+      <description>&lt;p&gt;In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
+From &lt;a href=&#34;http://en.wikipedia.org/wiki/Proxy_server&#34;&gt;Wikipedia&lt;/a&gt;, &amp;ldquo;a proxy server is a server (a computer system or an application program)
+that acts as an intermediary for requests from clients seeking resources from other servers.&amp;ldquo;The proxy server generally has some resources,
+or has access to some resources and when it receives request from a client, it access the appropriate resource and sends back the response.&lt;/p&gt;
+
+&lt;p&gt;So it serves two purposes, giving access to a resource which the client do not have access and it hides the real client who needs the resource.
+The second part is used for the anonymous browsing in Internet using anonymous proxy servers.
+Although this may not be as “anonymous” as it sounds because the proxy server which you connect to can maintain logs about the clients who are connecting to the server,
+and also the bigger risk being the data theft. Since the “anonymous” proxy server has access to all the request you send,
+there is risk of that data being exposed unless there is some kind of encryption in place between the client and the proxy server.&lt;/p&gt;
+
+&lt;p&gt;If you are in a network, and the machine which you are using don’t have access to Internet but another machine in the same subnet has access to Internet, then you can run this
+proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
+where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
+We will start by declaring some constants.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;int proxyServerPortNumber = 7879;
+int webServerPortNumber = 80;
+String webServerIpAddress = &#34;192.168.1.1&#34;;
+final int PROXY_SERVER_TIME_OUT = 5000;
+final int SOCKET_TIME_OUT = 2000;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;proxyServerPortNumber defines the port where the proxy server will be listening. You can use any port number which is not used by other process / standard port.&lt;/p&gt;
+
+&lt;p&gt;webServerIpAddress and webServerPortNumber defines the IP/port where the server can access the resources. Since we are designing this to access websites over http,
+the port is defined as 80 and the IP should be a machine which has Internet access (can be localhost too)&lt;/p&gt;
+
+&lt;p&gt;PROXY_SERVER_TIME_OUT and SOCKET_TIME_OUT are standard parameters defined for Server and network socket timeout. You can adjust this based on your needs.&lt;/p&gt;
+
+&lt;p&gt;Now we need to start the Java class to bind to the port number defined and to run in a infinite loop or as a daemon thread, so that it keeps on listening for requests.
+In this example, we will be using the infinite loop.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;try {
+    serverSocket = new ServerSocket(proxyServerPortNumber);
+} catch(Exception exc) {
+        System.exit(0);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now the process will be listening in the port 7879 for requests from clients. Now, let’s open an infinte loop and make a connection to the resource, in our case the web server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;socketProxy = new Socket(InetAddress.getByName(webServerIpAddress),webServerPortNumber);
+socketProxy.setSoTimeout(PROXY_SERVER_TIME_OUT);
+socket = serverSocket.accept();
+socket.setSoTimeout(SOCKET_TIME_OUT);
+inputStream = socket.getInputStream();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The request from the client will be received by Input Stream, so once we are connected, we will be sending this Input Stream which is nothing but a normal HTTP REQ object
+to the server which has the resource or as in our case the machine connected to Internet. The server will respond with the response which will be a HTTP RES over the
+Java Output Stream. We will be forwarding this output stream to the client which will be rendered in the application which the client requested in.
+That is if the request was sent through command line, the entire HTML will be printed, if its a browser the page will be rendered.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;try {
+    while( (intCounter = in.read()) != -1) {
+        if(intCounter == -1) break;
+        if(!bREQ)
+            bREQ = true;
+        pOutputStream.write(intCounter);
+        if(byteCheckFl &amp;gt; 0) {
+            break;
+        }
+        if(intCounter == 13 &amp;amp;&amp;amp; intPrevCounter == 10)
+            byteCheckFl++;
+        intPrevCounter = intCounter;
+    }
+} catch(Exception e) {
+    if(!bREQ) {
+        continue;
+    }
+}
+
+pOutputStream.flush();
+pIutputStream = socketProxy.getInputStream();
+outputStream = socket.getOutputStream();
+try {
+    while( (intCounter = pIutputStream.read()) != -1) {
+        outputStream.write(intCounter);
+    }
+} catch(Exception e) {
+}
+outputStream.flush();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make sure to close all the opened sockets and connections once the response is sent. Since this whole code is running in an infinite loop,
+the server will keep on waiting for the requests and sending the responses back. This is a crude implementation of the concept and there is
+room for a lot more improvements (like supporting SSL), but this should serve as a foundation to make the proxy a robust one.&lt;/p&gt;
+
+&lt;p&gt;We can easily make this Java class as a Win32 service, so that it will always run in background and starts along with the OS.
+That will need some work with JNI. I will explain that in a later post.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="System" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/categories/system/" />
+
+
+
+<meta property="og:updated_time" content="2009-10-11T01:15:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="alternate" type="application/rss+xml" title="VENISHJOE.NET Feed" href="/categories/system/index.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+	<div class="main-content loop content" role="main">
+		<header class="page-header">
+			<h1 class="page-header__title">System</h1>
+		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/recover-from-out-of-memory-errors-in-java/" rel="bookmark">Recover from Out of Memory Errors in Java</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In Java, as any other programming language there is a restriction of amount of memory any program can use.
+In languages like C the memory is limited to amount of RAM the operating system allocates to the applications or the user space.
+Since Java applications are technically running in the Java Virtual Machine (JVM), the applications have memory allocated by the JVM.
+Due to that we can start java applications with the amount of memory we need by using the –Xms and –Xmx command line parameters (Given the JVM has the memory to spare).</p>
+
+<p>In Java, the memory allocation is handled by JVM. We create the objects and JVM decides where to keep those objects in heap.
+In languages like C we can use methods like malloc to dynamically allocate memory for objects (variables) and when we are done,
+the appropriate clean up methods should be called to release the memory space.
+There are advantages in each method, and discussing them will take another separate post.</p>
+
+<p>In this post, I am going to explain how to recover from the Out of Memory errors. When a Java class faces out of memory errors,
+we should try to recover from those errors by reducing or blocking the service rather than crashing the application.
+In many cases when the application crashes due to out of memory, JVM is also impacted (which may be running other applications).</p>
+
+<p>You can ask why can’t we catch the exception.
+First of all, catching the exception means that the error has already occurred and in complex systems letting the error happen will be costly.
+This method will prevent you from the error itself. When the memory is lower than the defined threshold,
+the code is not even executed and we are taking recovery measures to free up some memory. Also if your application is using all the memory allocated to JVM,
+when out of memory error occurs it will end up crashing JVM so there is no point catching the exception since your application would have been crashed.</p>
+
+<p>To recover from the out of memory errors, we need to simulate the error first and then find a solution to recover. So this post consists of two major parts.</p>
+
+<h5 id="simulate-out-of-memory-error">Simulate Out of Memory Error</h5>
+
+<p>Simulating the error is pretty simple, we will create a lot of array objects in a loop for which JVM will allocate memory spaces. Once the objects reaches a threshold,
+the JVM throws out of memory errors. But with the current desktops having at least 1GB of RAM (with at least 100M as the max limit to JVM)
+we need to create thousands of objects to simulate the error. So as I mentioned in the start of this post we will use the –Xms and –Xmx options to start the program
+with a maximum of 2M so that we can easily simulate the error.</p>
+
+<p>Create a Java Class with the following code and start with the parameter java -Xms2m –Xmx3m</p>
+
+<pre><code class="java">public void fillMemory() throws Exception {
+    int voidSpace=20;
+    for (int outerIterator=1;outerIterator&lt;50;outerIterator++) {
+        System.out.println ("Iteration " + outerIterator + " Free Mem: "
+            + Runtime.getRuntime().freeMemory());
+        int innerIterator=10;
+        int[] memoryFillIntVar=new int[voidSpace];
+        do {
+            memoryFillIntVar[innerIterator]=0;
+            innerIterator--;
+        } while(innerIterator&gt;0);
+        voidSpace = voidSpace * 10;
+    }
+}
+</code></pre>
+
+<p>When you run this class (MemoryTest.java), you will get an output which will be similar to below.</p>
+
+<pre><code class="bash">D:\temp\>java -Xms2m -Xmx3m MemoryTest
+Iteration 1 Free Mem: 1826368
+Iteration 2 Free Mem: 1826368
+Iteration 3 Free Mem: 1826368
+Iteration 4 Free Mem: 1818352
+Iteration 5 Free Mem: 1738336
+Iteration 6 Free Mem: 1100952
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+        at MemoryTest.fillMemory(MemoryTest.java:22)
+        at MemoryTest.main(MemoryTest.java:12)
+</code></pre>
+
+<p>Now we have successfully simulated the out of memory error. Let’s continue to the next part where I will show how to recover from these errors.</p>
+
+<h5 id="recover-from-the-error">Recover from the error</h5>
+
+<p>To recover from the error we will be using one of the utility classes from <a href="http://db.apache.org/derby/javadoc/engine/overview-summary.html">Apache Derby V10.6 Internals</a> called
+<a href="http://db.apache.org/derby/javadoc/engine/org/apache/derby/iapi/services/memory/LowMemory.html">LowMemory</a>. The class has the below 2 methods drawing our intrest.</p>
+
+<p>void setLowMemory() - Sets a low memory watermark where the owner of this object just hit an OutOfMemoryError.</p>
+
+<p>boolean isLowMemory() - Returns true if a low memory water mark has been set and the current free memory is lower than it.</p>
+
+<p>So we should use setLowMemory to set a threshold and once set, whenever we call the isLowMemory it will return true/false based on the available memory.
+The isLowMemory will allow an low memory watermark to be valid for five seconds after it was set. This stops an incorrect limit being set for ever.
+This could occur if other threads were freeing memory when we called Runtime.getRuntime().freeMemory().</p>
+
+<p>Now let’s rewrite our earlier MemoryTest program to use these methods to recover from the error.
+The modification is simple, we just need to encapsulate the object creation in a if condition which checks for the memory before creating the objects.
+The modified code is given below.</p>
+
+<pre><code class="java">public class MemoryTest {
+    public static void main(String[] args) throws Exception {
+        MemoryTest memoryTest = new MemoryTest ();
+        LowMemory lowMemory = new LowMemory();
+        long[] memoryFillLongVar = new long[70000];
+        lowMemory.setLowMemory();
+        memoryTest.fillMemory(lowMemory);
+    }
+    public void fillMemory(LowMemory lowMemory) throws Exception {
+        int voidSpace=20;
+        for (int outerIterator=1;outerIterator&lt;50;outerIterator++) {
+            System.out.println ("Iteration " + outerIterator + " Free Mem: "
+                + Runtime.getRuntime().freeMemory());
+            int innerIterator=10;
+            if (!lowMemory.isLowMemory()) {
+                int[] memoryFillIntVar=new int[voidSpace];
+                do {
+                    memoryFillIntVar[innerIterator]=0;
+                    innerIterator--;
+                } while(innerIterator&gt;0);
+                    voidSpace = voidSpace * 10;
+            } else {
+                System.out.println ("Memory lower than threshold to
+                    continue. Exiting the loop.");
+                break;
+            }
+        }
+    }
+}
+</code></pre>
+
+<p>Let’s run the modified code with the same command line arguments.
+The output is given below. Note that the class file for LowMemory.java is present in the same directory as of MemoryTest.</p>
+
+<pre><code class="bash">D:\temp\>java -Xms2m -Xmx3m MemoryTest
+Iteration 1 Free Mem: 1349576
+Iteration 2 Free Mem: 1349576
+Iteration 3 Free Mem: 1349576
+Iteration 4 Free Mem: 1341560
+Iteration 5 Free Mem: 1261544
+Iteration 6 Free Mem: 461528
+Memory lower than threshold to continue. Exiting the loop.
+</code></pre>
+
+<p>This will be very useful while writing distributed J2EE applications which involves huge databases and processing of a large amount of data within a class.
+This will ensure there will be no data corruption and ensure the JVM (which may host multiple applications) is able to recover from the memory errors.
+You can always call the GC and runFinalization once this error occurs to free some memory.</p>
+
+<p>Just as an additional note, in C these kind of errors can be handled as the example code given below.</p>
+
+<pre><code class="c">int *pointer = malloc(3 * sizeof(int));
+if(pointer == NULL) {
+    fprintf(stderr, "Out of memory");
+    exit(1);
+}
+</code></pre>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/memory/" rel="tag">Memory</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/outofmemory/" rel="tag">OutOfMemory</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/errors/" rel="tag">Errors</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/system/" rel="tag">System</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/exceptions/" rel="tag">Exceptions</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+
+		
+	</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>

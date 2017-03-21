@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jdk7 on VENISHJOE.NET</title>
+    <link>/tags/jdk7/index.xml</link>
+    <description>Recent content in Jdk7 on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/jdk7/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Recursive File Tree Traversing in Java using NIO.2</title>
+      <link>/post/recursive-file-tree-traversing-in-java-using-nio/</link>
+      <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/recursive-file-tree-traversing-in-java-using-nio/</guid>
+      <description>&lt;p&gt;In my &lt;a href=&#34;/post/monitor-a-directory-for-changes-using-java/&#34;&gt;previous article about NIO.2&lt;/a&gt;,
+we have seen how to implement a service which monitors a directory recursively for any changes.
+In this article we will look at another improvement in JDK7 (NIO.2) called FileWatcher.
+This will allow us to implement a search or index. For example, we can find all the $some_pattern$ files in a given directory recursively and (or)
+delete / copy all the all the $some_pattern$ files in a file system.
+In a nutshell FileWatcher will get us a list of files from a file system based on a pattern which can be processed based on our requirement.&lt;/p&gt;
+
+&lt;p&gt;The FileVistor is an interface and our class should implement it.
+We have two methods before the traversal starts at the directory level &amp;amp; file level, and one method after the traversal is complete,
+which can be used for clean up or post processing. The important points from the interface is given in the below diagram.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;While I think FileVistor is the best way to handle this, JDK7 NIO.2 has given another option to achieve the same, a class named SimpleFileVistor (which implements FileVisitor).
+It should be self explanatory, a simplified version of FileVisitor.
+We can extend the SimpileFileVisitor into our class and then traverse the directory with overriding only the methods we need, and if any step fails we will get an IOException.&lt;/p&gt;
+
+&lt;p&gt;According to me, FileVisitor is better because it forces you to implement the methods (sure, you can leave them blank)
+since these methods are really important if you plan to implement recursive delete / copy or work with symbolic links.
+For example, if you are copying some files to a directory you should make sure that the directory should be created
+first before copying which can be done in the preVisitDirectory().&lt;/p&gt;
+
+&lt;p&gt;The other area of concern is symbolic links and how this will be handled by FileVisitor. This can be achieved using FileVisitOption enums.
+By default, the symbolic links are not followed so that we are not accidentally deleting any directories in a recursive delete.
+If you want to handle manually, there are two options FOLLOW_LINKS (follow the links) &amp;amp; DETECT_CYCLES (catch circular references).&lt;/p&gt;
+
+&lt;p&gt;If you want to exclude some directory from FileVisitor or if you are looking for a directory or a file in the file system and once you find it
+you want to stop searching that can be implemented by using the return type of FileVisitor, called FileVisitResult.
+SKIP_SUBTREE allows us to skip directories &amp;amp; subdirectories. TERMINATE stops the traversing.&lt;/p&gt;
+
+&lt;p&gt;The search can be initiated by the walkFileTree() method in Files class. This will take the starting directory (or root directory in your search) as a parameter.
+You can also define Integer.MAX_VALUE if you want to manually specify the depth.
+And as mentioned in the above diagram, define FileVisitOption for symbolic links if needed.&lt;/p&gt;
+
+&lt;p&gt;Enough with the API description, let&amp;rsquo;s write some sample code to implement what we discussed.
+We will be using the SimpleFileVisitor so that in our demo we don’t need to implement all the methods.&lt;/p&gt;
+
+&lt;p&gt;Let’s start with defining the pattern which needs to be searched for. In this example,
+we will search for all the *txt file / directory names recursively in any given directory.
+This can be done with getPathMatcher() in FileSystems&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher(&#34;glob:&#34; + &#34;*txt*&#34;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, let’s initiate the search by calling walkFileTree() as mentioned below. We are not defining anything specific for symbolic links so, by default its NO_FOLLOW.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;Files.walkFileTree(Paths.get(&#34;D://Search&#34;), fileVisitor);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let’s go through the implementations of class SimpleFileVisitor, we will be overriding only visitFile() &amp;amp; preVisitDirectory() in this example,
+but its a good practice to override all the five methods so that we have more control over the search. The implementation is pretty simple,
+based on the pattern the below methods will search for a directory or file and print the path.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;@Override
+public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
+    if (filePath.getName() != null &amp;amp;&amp;amp; pathMatcher.matches(filePath.getName()))
+        System.out.println(&#34;FILE: &#34; + filePath);
+    return FileVisitResult.CONTINUE;
+}
+
+@Override
+public FileVisitResult preVisitDirectory(Path directoryPath) {
+    if (directoryPath.getName() != null &amp;amp;&amp;amp; pathMatcher.matches(directoryPath.getName()))
+        System.out.println(&#34;DIR: &#34; + directoryPath);
+    return FileVisitResult.CONTINUE;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once this is completed, we can use the postVisitDirectory() to perform additional tasks or any cleanup if needed. A sample output from my machine is given below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The complete source code is given below. Please note that you need JDK7 to run this code.
+Source is also available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2_file-visitor&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class NIO2_FileVisitor extends SimpleFileVisitor&amp;lt;Path&amp;gt; {
+    private PathMatcher pathMatcher;
+
+    @Override
+    public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
+        if (filePath.getName() != null &amp;amp;&amp;amp; pathMatcher.matches(filePath.getName()))
+                System.out.println(&#34;FILE: &#34; + filePath);
+        return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path directoryPath) {
+        if (directoryPath.getName() != null &amp;amp;&amp;amp; pathMatcher.matches(directoryPath.getName()))
+                System.out.println(&#34;DIR: &#34; + directoryPath);
+        return FileVisitResult.CONTINUE;
+    }
+
+    public static void main(String[] args) throws IOException {
+        NIO2_FileVisitor fileVisitor = new NIO2_FileVisitor();
+        fileVisitor.pathMatcher = FileSystems.getDefault().getPathMatcher(&#34;glob:&#34; + &#34;*txt*&#34;);
+        Files.walkFileTree(Paths.get(&#34;D://Search&#34;), fileVisitor);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Monitor a Directory for Changes using Java</title>
+      <link>/post/monitor-a-directory-for-changes-using-java/</link>
+      <pubDate>Sun, 18 Oct 2009 02:23:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/monitor-a-directory-for-changes-using-java/</guid>
+      <description>&lt;p&gt;Many applications which we use on a day to day basis like a music organizer, file editors monitor the directory for any changes in the files/directories and
+take appropriate action in the application if there are any changes detected on the fly.
+Since Java do not have direct access to the system level calls (unless we use JNI, which will make the code platform specific)
+the only way to monitor any directory is to use a separate thread which will be using a lot of resources (memory &amp;amp; disk I/O) to monitor the changes inside the directory.
+If we have sub-directories and need a recursive monitor, then the thread becomes more resource intensive.&lt;/p&gt;
+
+&lt;p&gt;There was a JSR (Java Specification Request) requested to add / rewrite more I/O APIs for Java platform. This was implemented in JDK 7 as
+&lt;a href=&#34;http://jcp.org/en/jsr/detail?id=203&#34;&gt;JSR 203&lt;/a&gt; with support for APIs like file system access, scalable asynchronous I/O operations,
+socket-channel binding and configuration, and multicast datagrams.&lt;/p&gt;
+
+&lt;p&gt;JSR 203 is one of the big feature for JDK 7 (Developer Preview is available in java.sun.com) and its been implemented as the second I/O package is java,
+called as NIO.2. I will be looking into more of these packages in future posts, but in this,
+I will show how to monitor a directory and its sub-directories for any changes using NIO.2 (JDK 7).&lt;/p&gt;
+
+&lt;p&gt;The APIs which we will be using &lt;a href=&#34;http://java.sun.com/javase/7/docs/api/java/nio/file/WatchService.html&#34;&gt;WatchService&lt;/a&gt;
+(a watch service that watches registered objects for changes and events), &lt;a href=&#34;http://java.sun.com/javase/7/docs/api/java/nio/file/WatchKey.html&#34;&gt;WatchKey&lt;/a&gt;
+(a token representing the registration of a watchable object with a WatchService) and &lt;a href=&#34;http://java.sun.com/javase/7/docs/api/java/nio/file/WatchEvent.html&#34;&gt;WatchEvent&lt;/a&gt;
+(an event or a repeated event for an object that is registered with a WatchService) to monitor a directory. So, without further explanation, let’s start working on the code.&lt;/p&gt;
+
+&lt;p&gt;Please note that you need JDK 7 to run this program. While writing this post,
+JDK 7 is available as a EA (Early Access) in &lt;a href=&#34;http://java.sun.com/javase/downloads/ea.jsp&#34;&gt;Java Early Access Downloads&lt;/a&gt; page. Download the JDK and install it.&lt;/p&gt;
+
+&lt;p&gt;The first step is to get a directory to monitor. Path is one of the new I/O API as a part of NIO.2 which gives us more control over the I/O.
+So let’s get the directory to watch, if you want to watch the directory recursively then there should be another boolean flag defined,
+but in this example we will watch only the parent directory.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;Path _directotyToWatch = Paths.get(args[0]);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now let’s create a Watch service to the above directory and add a key to the service.
+In the watch key we can define what are all the events we need to look for.
+In this example we will monitor Create, Delete &amp;amp; Rename/Modify of the files or directories in the path.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+WatchKey watchKey = _directotyToWatch.register(
+    watcherSvc,ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we have all the variables defined. Let’s start a infinite loop to monitor the directory for any changes using WatchEvent.
+We will poll events in the directory and once some event is triggered (based on the WatchKey definition)
+we will print the type of event occurred and the name of the file/directory on which the event occurred. Once done, we will reset the watch key.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;while (true) {
+    watchKey=watcherSvc.take();
+    for (WatchEvent&amp;lt;?&amp;gt; event: watchKey.pollEvents()) {
+        WatchEvent&amp;lt;Path&amp;gt; watchEvent = castEvent(event);
+        System.out.println(event.kind().name().toString() + &#34; &#34;
+            + _directotyToWatch.resolve(watchEvent.context()));
+    watchKey.reset();
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now to make the WatchEvent &amp;lt;Path&amp;gt; work, we should create a small utility as below ( this is the castEvent which is used in the above code).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;static &amp;lt;T&amp;gt; WatchEvent&amp;lt;T&amp;gt; castEvent(WatchEvent&amp;lt;?&amp;gt; event) {
+    return (WatchEvent&amp;lt;T&amp;gt;)event;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now compile the file and give a directory as a runtime parameter while running it.
+Once the program starts running, start creating some directories/files or modify/rename some files in the directory which you gave as a parameter,
+the program will start triggering the event and you should be able to watch the modifications in the console.
+A sample output from my machine is below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00006/monitor-a-directory-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2-watch-folder&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;import java.nio.file.*;
+import static java.nio.file.StandardWatchEventKind.*;
+
+static &amp;lt;T&amp;gt; WatchEvent&amp;lt;T&amp;gt; castEvent(WatchEvent&amp;lt;?&amp;gt; event) {
+    return (WatchEvent&amp;lt;T&amp;gt;)event;
+}
+
+public static void main (String args[]) throws Exception {
+    Path _directotyToWatch = Paths.get(args[0]);
+    WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+    WatchKey watchKey = _directotyToWatch.register(watcherSvc,
+        ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+
+    while (true) {
+        watchKey=watcherSvc.take();
+        for (WatchEvent&amp;lt;?&amp;gt; event: watchKey.pollEvents()) {
+            WatchEvent&amp;lt;Path&amp;gt; watchEvent = castEvent(event);
+            System.out.println(event.kind().name().toString() + &#34; &#34;
+                + _directotyToWatch.resolve(watchEvent.context()));
+            watchKey.reset();
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

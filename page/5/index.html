@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VENISHJOE.NET - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="VENISHJOE.NET" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/" />
+
+
+
+<meta property="og:updated_time" content="2009-09-20T17:24:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="alternate" type="application/rss+xml" title="VENISHJOE.NET Feed" href="/index.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+	<div class="main-content loop content" role="main">
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/recover-database-passwords-from-weblogic-server/" rel="bookmark">Recover Database Passwords from Weblogic Server</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
+If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
+The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
+The database passwords will be in config.xml under the JDBC configuration and will look something like below.</p>
+
+<pre><code>$ PasswordEncrypted=&quot;{3DES}bDcllidskanDsaIsnaiG==&quot;
+</code></pre>
+
+<p>To recover the passwords, we need some prerequisites which are listed below.</p>
+
+<ol>
+<li>weblogic.jar &amp; jsafeFIPS.jar from the Weblogic server. (You can find this under WL_HOME/server/lib directory)</li>
+<li>SerializedSystemIni.dat from the application domain (You can find this under the application domain root)</li>
+<li>The encrypted password from config.xml / boot.properties including {3DES}</li>
+</ol>
+
+<p>SerializedSystemIni.dat has the key to recover the passwords so this is absolutely essential and it should be from the same server since the key depends on the machine.
+If you are not able to find this file, then probably the server administrator hasn’t given read access to this file to all the users. For Production systems that should be a practice,
+only the id which will be starting the weblogic server should have read permissions to the SerializedSystemIni.dat file. If not, this will be a security risk,
+its like leaving the key for your Home on the street. Coming back to the subject, if you got the file then you are all set for the next step.</p>
+
+<p>Assuming you have all the files needed, let’s proceed to the next step. You can copy all the prerequisite files to your workstation or if needed you can run the utility from the server too.
+As long as the machines have JDK installed it should be fine.</p>
+
+<p>To recover the passwords we will be using a utility from Apache <a href="http://geronimo.apache.org/apidocs/2.0.1/">Geronimo 2.0.1 API</a> -
+<a href="http://geronimo.apache.org/apidocs/2.0.1/src-html/org/apache/geronimo/converter/bea/Weblogic81Utils.html">Weblogic81Utils.java</a>. Although this file is a part of a package,
+this can be run as a standalone class with little modification. All you need to do is to remove the package reference and add a main() method to the class.
+The code for main() method is below.</p>
+
+<pre><code class="java">public static void main(String args[]) {
+    try{
+        String beaDir = "$Server/lib or the Directory which has the requried JAR files$";
+        String appDir = "$App Domain or the Directory which has SerializedSystemIni.dat$";
+        String hashedPassword = "{3DES}Vdsds76nGsfdsfKJbg54ss==";
+        Weblogic81Utils weblogic81Utils = new Weblogic81Utils(beaDir, appDir);
+        String plainTextPassword = weblogic81Utils.decryptString(hashedPassword);
+        String configXML = weblogic81Utils.getConfigXML();
+        Properties bootProperties = (Properties) weblogic81Utils.getBootProperties();
+        System.out.println("-----------------------------------------------------");
+        System.out.println("hashedPassword" + " == " + plainTextPassword);
+        System.out.println("boot.properties" + " &lt;username&gt; "
+            + bootProperties.getProperty("username"));
+        System.out.println("boot.properties" + " &lt;password&gt; "
+            + bootProperties.getProperty("password"));
+        System.out.println("-----------------------------------------------------");
+    } catch (Exception e) {
+        throw (RuntimeException)new IllegalArgumentException("Unable to initialize"
+            + "encryption routines from provided arguments").initCause(e);
+    }
+}
+</code></pre>
+
+<p>beaDir - If you are running this on the server, it will be the $WL_HOME/server/lib directory. If you are running elsewhere it will be the path which has weblogic.jar and jsafeFIPS.jar.</p>
+
+<p>appDir - If you are running this on the server, it will be your application domain directory. If you are running elsewhere, it will be the path which contains SerializedSystemIni.dat,
+config.xml and boot.properties.</p>
+
+<p>hashedPassword – In this example, I am not reading config.xml directly instead I give the encrypted password as a input. So this will be the encrypted database password from your config.xml.</p>
+
+<p>Save the class file and we are all set to run the program. Make sure you removed the package reference since we are running this as a standalone program. No other change is required.
+Compile the class and run the class. I tested this using JDK 1.6, but any JDK higher than 1.4 should work.</p>
+
+<p>Sample output is given below.</p>
+
+<p><img src="/media/images/00002/recover-database-passwords-output.png#floatcenter" alt="" /></p>
+
+<p>This was tested with Weblogic Server 8.1 and JDK 1.6.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/database/" rel="tag">Database</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/geronimo/" rel="tag">Geronimo</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/3des/" rel="tag">3DES</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/password-recovery/" rel="tag">Password Recovery</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/weblogic/" rel="tag">Weblogic</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/serial-key-generation-and-validation-in-java/" rel="bookmark">Serial Key Generation and Validation in Java</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.</p>
+
+<p><b><font color="red">WARNING:</font></b> Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.</p>
+
+<ol>
+<li>Algorithm for Serial Generation</li>
+<li>Generating the Serial</li>
+<li>Validating the Serial</li>
+</ol>
+
+<h5 id="algorithm-for-serial-generation">Algorithm for Serial Generation</h5>
+
+<p>The following can be used as a simple algorithm for generating serial keys with 18 digits. In this method we are generating the serials based on the input the user gives, which can be the name of the user,
+company name etc. So most of the times the serial will be unique (based on the input). We get the name of the user as the input and generate the MD2, MD5 &amp; SHA1 hashes for the string and concatenate together.
+This will generate a total of 104 digits, since we need only 18 of them, we can use a set of pre defined numbers to select the 18 digits.</p>
+
+<p>The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.</p>
+
+<p><img src="/media/images/00001/serial-key-generation-algorithm.png#floatcenter" alt="" /></p>
+
+<h5 id="generating-the-serial">Generating the Serial</h5>
+
+<p>To generate the serial, we need a input string and based on the input string we will be generating MD2, MD5 and SHA1 hashes. The method calculateSecurityHash takes the input string and the hashing method
+as input and generates the hash based on the method.</p>
+
+<pre><code class="java">String serialNumberEncoded = calculateSecurityHash(fullNameString,"MD2") +
+    calculateSecurityHash(fullNameString,"MD5") +
+        calculateSecurityHash(fullNameString,"SHA1");
+</code></pre>
+
+<p>Generating the Hash for the input string based on the type.</p>
+
+<pre><code class="java">private String calculateSecurityHash(String stringInput, String algorithmName)
+    throws java.security.NoSuchAlgorithmException {
+        String hexMessageEncode = "";
+        byte[] buffer = stringInput.getBytes();
+        java.security.MessageDigest messageDigest =
+            java.security.MessageDigest.getInstance(algorithmName);
+        messageDigest.update(buffer);
+        byte[] messageDigestBytes = messageDigest.digest();
+        for (int index=0; index &lt; messageDigestBytes.length ; index ++) {
+            int countEncode = messageDigestBytes[index] &amp; 0xff;
+            if (Integer.toHexString(countEncode).length() == 1)
+                hexMessageEncode = hexMessageEncode + "0";
+            hexMessageEncode = hexMessageEncode + Integer.toHexString(countEncode);
+        }
+        return hexMessageEncode;
+    }
+</code></pre>
+
+<p>Once all the three types of hashes are combined, we will have a total of 104 characters. Since we need only 18 for our serial key we can pick any random 18 digits from the combined hash.
+We cannot use random number generation to pick up the 18 digits since we need a valid exit strategy for validating the key.</p>
+
+<pre><code class="java">String serialNumber = ""
+    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
+    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + "-"
+    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
+    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
+    + serialNumberEncoded.charAt(98)  + "-"
+    + serialNumberEncoded.charAt(47)  + serialNumberEncoded.charAt(65)
+    + serialNumberEncoded.charAt(18)  + serialNumberEncoded.charAt(85) + "-"
+    + serialNumberEncoded.charAt(27)  + serialNumberEncoded.charAt(53)
+    + serialNumberEncoded.charAt(102) + serialNumberEncoded.charAt(15)
+    + serialNumberEncoded.charAt(99);
+</code></pre>
+
+<p>You can replace the numbers with anything between 0 and 103 so that the key is unique and based on the input string.</p>
+
+<h5 id="validating-the-serial">Validating the Serial</h5>
+
+<p>Now, whenever we get a user name and serial combination, we should be able to validate that. Since we already know the algorithm used to generate the serial, the validation part is pretty easier.
+We cannot follow the steps which we did while generating the serial in opposite direction because we will end up with a bunch of characters without any valid lead.
+Since we have the serial and user name to validate, we take the user name and generate the serial for the user name as per our algorithm. Once we have the serial number,
+we compare this against the serial which we got for validation, if both matches then we have a valid key.</p>
+
+<pre><code class="java">String serialNumberEncoded =
+    registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"MD2")
+    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"MD5")
+    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"SHA1");
+
+String serialNumberCalc = ""
+    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
+    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + "-"
+    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
+    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
+    + serialNumberEncoded.charAt(98)  + "-" + serialNumberEncoded.charAt(47)
+    + serialNumberEncoded.charAt(65)  + serialNumberEncoded.charAt(18)
+    + serialNumberEncoded.charAt(85)  + "-" + serialNumberEncoded.charAt(27)
+    + serialNumberEncoded.charAt(53)  + serialNumberEncoded.charAt(102)
+    + serialNumberEncoded.charAt(15)  + serialNumberEncoded.charAt(99);
+
+if (serialNumber.equals(serialNumberCalc))
+    System.out.println("Serial MATCH");
+else
+    System.out.println("Serial MIS-MATCH");
+</code></pre>
+
+<p>Sample output from this program is demonstrated below.</p>
+
+<p><img src="/media/images/00001/serial-key-generation-output.jpg#floatcenter" alt="" /></p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/serial-key/" rel="tag">Serial Key</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/core-java/" rel="tag">Core Java</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+
+		
+<div class="pagination clearfix">
+	<a class="pagination__item pagination__item--prev" href="/page/4/">«</a>
+	<span class="pagination__item pagination__item--current">5/5</span>
+</div>
+
+	</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>

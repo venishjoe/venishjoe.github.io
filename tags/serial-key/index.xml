@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Serial Key on VENISHJOE.NET</title>
+    <link>/tags/serial-key/index.xml</link>
+    <description>Recent content in Serial Key on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/serial-key/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Serial Key Generation and Validation in Java</title>
+      <link>/post/serial-key-generation-and-validation-in-java/</link>
+      <pubDate>Mon, 31 Aug 2009 23:54:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/serial-key-generation-and-validation-in-java/</guid>
+      <description>&lt;p&gt;In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.&lt;/p&gt;
+
+&lt;p&gt;&lt;b&gt;&lt;font color=&#34;red&#34;&gt;WARNING:&lt;/font&gt;&lt;/b&gt; Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Algorithm for Serial Generation&lt;/li&gt;
+&lt;li&gt;Generating the Serial&lt;/li&gt;
+&lt;li&gt;Validating the Serial&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h5 id=&#34;algorithm-for-serial-generation&#34;&gt;Algorithm for Serial Generation&lt;/h5&gt;
+
+&lt;p&gt;The following can be used as a simple algorithm for generating serial keys with 18 digits. In this method we are generating the serials based on the input the user gives, which can be the name of the user,
+company name etc. So most of the times the serial will be unique (based on the input). We get the name of the user as the input and generate the MD2, MD5 &amp;amp; SHA1 hashes for the string and concatenate together.
+This will generate a total of 104 digits, since we need only 18 of them, we can use a set of pre defined numbers to select the 18 digits.&lt;/p&gt;
+
+&lt;p&gt;The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&#34;generating-the-serial&#34;&gt;Generating the Serial&lt;/h5&gt;
+
+&lt;p&gt;To generate the serial, we need a input string and based on the input string we will be generating MD2, MD5 and SHA1 hashes. The method calculateSecurityHash takes the input string and the hashing method
+as input and generates the hash based on the method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;String serialNumberEncoded = calculateSecurityHash(fullNameString,&#34;MD2&#34;) +
+    calculateSecurityHash(fullNameString,&#34;MD5&#34;) +
+        calculateSecurityHash(fullNameString,&#34;SHA1&#34;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Generating the Hash for the input string based on the type.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;private String calculateSecurityHash(String stringInput, String algorithmName)
+    throws java.security.NoSuchAlgorithmException {
+        String hexMessageEncode = &#34;&#34;;
+        byte[] buffer = stringInput.getBytes();
+        java.security.MessageDigest messageDigest =
+            java.security.MessageDigest.getInstance(algorithmName);
+        messageDigest.update(buffer);
+        byte[] messageDigestBytes = messageDigest.digest();
+        for (int index=0; index &amp;lt; messageDigestBytes.length ; index ++) {
+            int countEncode = messageDigestBytes[index] &amp;amp; 0xff;
+            if (Integer.toHexString(countEncode).length() == 1)
+                hexMessageEncode = hexMessageEncode + &#34;0&#34;;
+            hexMessageEncode = hexMessageEncode + Integer.toHexString(countEncode);
+        }
+        return hexMessageEncode;
+    }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once all the three types of hashes are combined, we will have a total of 104 characters. Since we need only 18 for our serial key we can pick any random 18 digits from the combined hash.
+We cannot use random number generation to pick up the 18 digits since we need a valid exit strategy for validating the key.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;String serialNumber = &#34;&#34;
+    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
+    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + &#34;-&#34;
+    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
+    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
+    + serialNumberEncoded.charAt(98)  + &#34;-&#34;
+    + serialNumberEncoded.charAt(47)  + serialNumberEncoded.charAt(65)
+    + serialNumberEncoded.charAt(18)  + serialNumberEncoded.charAt(85) + &#34;-&#34;
+    + serialNumberEncoded.charAt(27)  + serialNumberEncoded.charAt(53)
+    + serialNumberEncoded.charAt(102) + serialNumberEncoded.charAt(15)
+    + serialNumberEncoded.charAt(99);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;You can replace the numbers with anything between 0 and 103 so that the key is unique and based on the input string.&lt;/p&gt;
+
+&lt;h5 id=&#34;validating-the-serial&#34;&gt;Validating the Serial&lt;/h5&gt;
+
+&lt;p&gt;Now, whenever we get a user name and serial combination, we should be able to validate that. Since we already know the algorithm used to generate the serial, the validation part is pretty easier.
+We cannot follow the steps which we did while generating the serial in opposite direction because we will end up with a bunch of characters without any valid lead.
+Since we have the serial and user name to validate, we take the user name and generate the serial for the user name as per our algorithm. Once we have the serial number,
+we compare this against the serial which we got for validation, if both matches then we have a valid key.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;String serialNumberEncoded =
+    registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,&#34;MD2&#34;)
+    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,&#34;MD5&#34;)
+    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,&#34;SHA1&#34;);
+
+String serialNumberCalc = &#34;&#34;
+    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
+    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + &#34;-&#34;
+    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
+    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
+    + serialNumberEncoded.charAt(98)  + &#34;-&#34; + serialNumberEncoded.charAt(47)
+    + serialNumberEncoded.charAt(65)  + serialNumberEncoded.charAt(18)
+    + serialNumberEncoded.charAt(85)  + &#34;-&#34; + serialNumberEncoded.charAt(27)
+    + serialNumberEncoded.charAt(53)  + serialNumberEncoded.charAt(102)
+    + serialNumberEncoded.charAt(15)  + serialNumberEncoded.charAt(99);
+
+if (serialNumber.equals(serialNumberCalc))
+    System.out.println(&#34;Serial MATCH&#34;);
+else
+    System.out.println(&#34;Serial MIS-MATCH&#34;);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Sample output from this program is demonstrated below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

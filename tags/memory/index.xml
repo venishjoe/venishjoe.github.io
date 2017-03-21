@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Memory on VENISHJOE.NET</title>
+    <link>/tags/memory/index.xml</link>
+    <description>Recent content in Memory on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/memory/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Recover from Out of Memory Errors in Java</title>
+      <link>/post/recover-from-out-of-memory-errors-in-java/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/recover-from-out-of-memory-errors-in-java/</guid>
+      <description>&lt;p&gt;In Java, as any other programming language there is a restriction of amount of memory any program can use.
+In languages like C the memory is limited to amount of RAM the operating system allocates to the applications or the user space.
+Since Java applications are technically running in the Java Virtual Machine (JVM), the applications have memory allocated by the JVM.
+Due to that we can start java applications with the amount of memory we need by using the –Xms and –Xmx command line parameters (Given the JVM has the memory to spare).&lt;/p&gt;
+
+&lt;p&gt;In Java, the memory allocation is handled by JVM. We create the objects and JVM decides where to keep those objects in heap.
+In languages like C we can use methods like malloc to dynamically allocate memory for objects (variables) and when we are done,
+the appropriate clean up methods should be called to release the memory space.
+There are advantages in each method, and discussing them will take another separate post.&lt;/p&gt;
+
+&lt;p&gt;In this post, I am going to explain how to recover from the Out of Memory errors. When a Java class faces out of memory errors,
+we should try to recover from those errors by reducing or blocking the service rather than crashing the application.
+In many cases when the application crashes due to out of memory, JVM is also impacted (which may be running other applications).&lt;/p&gt;
+
+&lt;p&gt;You can ask why can’t we catch the exception.
+First of all, catching the exception means that the error has already occurred and in complex systems letting the error happen will be costly.
+This method will prevent you from the error itself. When the memory is lower than the defined threshold,
+the code is not even executed and we are taking recovery measures to free up some memory. Also if your application is using all the memory allocated to JVM,
+when out of memory error occurs it will end up crashing JVM so there is no point catching the exception since your application would have been crashed.&lt;/p&gt;
+
+&lt;p&gt;To recover from the out of memory errors, we need to simulate the error first and then find a solution to recover. So this post consists of two major parts.&lt;/p&gt;
+
+&lt;h5 id=&#34;simulate-out-of-memory-error&#34;&gt;Simulate Out of Memory Error&lt;/h5&gt;
+
+&lt;p&gt;Simulating the error is pretty simple, we will create a lot of array objects in a loop for which JVM will allocate memory spaces. Once the objects reaches a threshold,
+the JVM throws out of memory errors. But with the current desktops having at least 1GB of RAM (with at least 100M as the max limit to JVM)
+we need to create thousands of objects to simulate the error. So as I mentioned in the start of this post we will use the –Xms and –Xmx options to start the program
+with a maximum of 2M so that we can easily simulate the error.&lt;/p&gt;
+
+&lt;p&gt;Create a Java Class with the following code and start with the parameter java -Xms2m –Xmx3m&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public void fillMemory() throws Exception {
+    int voidSpace=20;
+    for (int outerIterator=1;outerIterator&amp;lt;50;outerIterator++) {
+        System.out.println (&#34;Iteration &#34; + outerIterator + &#34; Free Mem: &#34;
+            + Runtime.getRuntime().freeMemory());
+        int innerIterator=10;
+        int[] memoryFillIntVar=new int[voidSpace];
+        do {
+            memoryFillIntVar[innerIterator]=0;
+            innerIterator--;
+        } while(innerIterator&amp;gt;0);
+        voidSpace = voidSpace * 10;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;When you run this class (MemoryTest.java), you will get an output which will be similar to below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;bash&#34;&gt;D:\temp\&gt;java -Xms2m -Xmx3m MemoryTest
+Iteration 1 Free Mem: 1826368
+Iteration 2 Free Mem: 1826368
+Iteration 3 Free Mem: 1826368
+Iteration 4 Free Mem: 1818352
+Iteration 5 Free Mem: 1738336
+Iteration 6 Free Mem: 1100952
+Exception in thread &#34;main&#34; java.lang.OutOfMemoryError: Java heap space
+        at MemoryTest.fillMemory(MemoryTest.java:22)
+        at MemoryTest.main(MemoryTest.java:12)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we have successfully simulated the out of memory error. Let’s continue to the next part where I will show how to recover from these errors.&lt;/p&gt;
+
+&lt;h5 id=&#34;recover-from-the-error&#34;&gt;Recover from the error&lt;/h5&gt;
+
+&lt;p&gt;To recover from the error we will be using one of the utility classes from &lt;a href=&#34;http://db.apache.org/derby/javadoc/engine/overview-summary.html&#34;&gt;Apache Derby V10.6 Internals&lt;/a&gt; called
+&lt;a href=&#34;http://db.apache.org/derby/javadoc/engine/org/apache/derby/iapi/services/memory/LowMemory.html&#34;&gt;LowMemory&lt;/a&gt;. The class has the below 2 methods drawing our intrest.&lt;/p&gt;
+
+&lt;p&gt;void setLowMemory() - Sets a low memory watermark where the owner of this object just hit an OutOfMemoryError.&lt;/p&gt;
+
+&lt;p&gt;boolean isLowMemory() - Returns true if a low memory water mark has been set and the current free memory is lower than it.&lt;/p&gt;
+
+&lt;p&gt;So we should use setLowMemory to set a threshold and once set, whenever we call the isLowMemory it will return true/false based on the available memory.
+The isLowMemory will allow an low memory watermark to be valid for five seconds after it was set. This stops an incorrect limit being set for ever.
+This could occur if other threads were freeing memory when we called Runtime.getRuntime().freeMemory().&lt;/p&gt;
+
+&lt;p&gt;Now let’s rewrite our earlier MemoryTest program to use these methods to recover from the error.
+The modification is simple, we just need to encapsulate the object creation in a if condition which checks for the memory before creating the objects.
+The modified code is given below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class MemoryTest {
+    public static void main(String[] args) throws Exception {
+        MemoryTest memoryTest = new MemoryTest ();
+        LowMemory lowMemory = new LowMemory();
+        long[] memoryFillLongVar = new long[70000];
+        lowMemory.setLowMemory();
+        memoryTest.fillMemory(lowMemory);
+    }
+    public void fillMemory(LowMemory lowMemory) throws Exception {
+        int voidSpace=20;
+        for (int outerIterator=1;outerIterator&amp;lt;50;outerIterator++) {
+            System.out.println (&#34;Iteration &#34; + outerIterator + &#34; Free Mem: &#34;
+                + Runtime.getRuntime().freeMemory());
+            int innerIterator=10;
+            if (!lowMemory.isLowMemory()) {
+                int[] memoryFillIntVar=new int[voidSpace];
+                do {
+                    memoryFillIntVar[innerIterator]=0;
+                    innerIterator--;
+                } while(innerIterator&amp;gt;0);
+                    voidSpace = voidSpace * 10;
+            } else {
+                System.out.println (&#34;Memory lower than threshold to
+                    continue. Exiting the loop.&#34;);
+                break;
+            }
+        }
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let’s run the modified code with the same command line arguments.
+The output is given below. Note that the class file for LowMemory.java is present in the same directory as of MemoryTest.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;bash&#34;&gt;D:\temp\&gt;java -Xms2m -Xmx3m MemoryTest
+Iteration 1 Free Mem: 1349576
+Iteration 2 Free Mem: 1349576
+Iteration 3 Free Mem: 1349576
+Iteration 4 Free Mem: 1341560
+Iteration 5 Free Mem: 1261544
+Iteration 6 Free Mem: 461528
+Memory lower than threshold to continue. Exiting the loop.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will be very useful while writing distributed J2EE applications which involves huge databases and processing of a large amount of data within a class.
+This will ensure there will be no data corruption and ensure the JVM (which may host multiple applications) is able to recover from the memory errors.
+You can always call the GC and runFinalization once this error occurs to free some memory.&lt;/p&gt;
+
+&lt;p&gt;Just as an additional note, in C these kind of errors can be handled as the example code given below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;c&#34;&gt;int *pointer = malloc(3 * sizeof(int));
+if(pointer == NULL) {
+    fprintf(stderr, &#34;Out of memory&#34;);
+    exit(1);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

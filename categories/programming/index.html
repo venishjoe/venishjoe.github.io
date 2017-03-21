@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programming - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="Programming" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/categories/programming/" />
+
+
+
+<meta property="og:updated_time" content="2010-04-18T21:41:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="alternate" type="application/rss+xml" title="VENISHJOE.NET Feed" href="/categories/programming/index.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+	<div class="main-content loop content" role="main">
+		<header class="page-header">
+			<h1 class="page-header__title">Programming</h1>
+		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/dynamic-columns-in-jsp-model-with-struts/" rel="bookmark">Dynamic Columns in JSP Model with Struts Framework</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>While developing web applications, we will come across a lot of scenarios where we should use dynamic columns depending on the entitlement of the user or
+from the result set depending on the data itself. Dynamic columns in web applications give control to the user on what he wants to see
+(specially when we have a huge amount of data to work with). For applications with sensitive data,
+this can be even extended to act as a security layer where the access to specific data can be controlled with high precision.</p>
+
+<p>In this article, I will explain one of the methods to implement this in any J2EE application with little or no code change.</p>
+
+<h5 id="high-level-architecture">High Level Architecture</h5>
+
+<p><img src="/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter" alt="" /></p>
+
+<p>In a nut shell, this design uses the Application Context of the container to maintain the values pertaining to a particular user,
+if the requirement demands not to maintain the preference after a user session is terminated, then it can be achieved by destroying the object stored in the context.</p>
+
+<p>We will start by creating a singleton class, which will be used to store the user preference about the columns.
+The user preference object can be mapped  against the user id or any other primary key, so that different preferences are maintained for different users.
+While the container starts, the instance for the singleton will be created. The default preferences can be loaded from a property / xml file or from a data store (DB).
+This object will contain the preferences of different pages with the different key names so that the same object can be used to maintain the preference across the application.
+This will be read during the logon operation and if the object in the application context doesn&rsquo;t contain any values
+(if the user logs in for the first time or in an application where the preference is specific to the session) then the default values are loaded. Once the page loads,
+the preference can be read from the application context and can be  presented to the user. If the user edits his preferences, it will be updated in the application context.
+Note that the application context is not persistent between container restarts, so appropriate mechanisms should be taken to store the data.</p>
+
+<h5 id="implementation">Implementation</h5>
+
+<p>Let’s go through the implementation now. The following steps describe how to integrate this component to an existing Struts application.</p>
+
+<h6 id="start-up-servlet-and-initializing-the-singleton-class">Start-up servlet and initializing the Singleton Class</h6>
+
+<p>Create an Initializer Servlet and make an entry for the same in the web.xml file so that the Servlet starts when the container is initialized.
+Make sure the load-on-startup is set to 1, which ensures that the application server loads the servlet while startup.</p>
+
+<pre><code class="xmls">&lt;servlet&gt;
+    &lt;servlet-name&gt; InitializerServlet &lt;/servlet-name&gt;
+    &lt;servlet-class&gt;com.startup.common.InitializerServlet&lt;/servlet-class&gt;
+    &lt;load-on-startup&gt; 1 &lt;/load-on-startup&gt;
+&lt;/servlet&gt;
+</code></pre>
+
+<p>Next, create a Singleton class, which contains getter and setter methods for dynamic column preference, the object can be any collection,
+we are using Hash Map in this example which will be used to store the primary key against the list containing the preference.
+The set &amp; get methods in the Singleton should be synchronized so that the simultaneous access is restricted. Also override the clone() method in your singleton.</p>
+
+<pre><code class="java">public class AppSingleton implements Serializable {
+    private Hashtable cusomizeViewValues = null;
+    private static AppSingleton appSingleton = null;
+
+    private AppSingleton (){ }
+
+    public synchronized void setCusomizeViewValues (Hashtable cusomizeViewValues){
+        this.cusomizeViewValues = cusomizeViewValues;
+    }
+
+    public static synchronized AppSingleton getInstance () throws Exception {
+        try {
+            if (appSingleton == null)
+                return new AppSingleton ();
+          } catch (Exception e) {
+            throw new Exception();
+        }
+    }
+
+    public Object clone() throws CloneNotSupportedException{
+        throw new CloneNotSupportedException();
+    }
+}
+</code></pre>
+
+<p>In the startup servlet, create an instance of the singleton class. When created, the object will be available in the application context of the container,
+and no one will be able to create another instance, until the object created in startup is destroyed.
+Since we have overridden the clone method, no one will be able to clone the particular object.
+These measures are to ensure the integrity of the user preference stored in the singleton.
+A sample Initializer servlet will look like the following code.</p>
+
+<pre><code class="java">public class InitializerServlet extends HttpServlet {
+    public void init () throws ServletException {
+        AppSingleton appSingleton = AppSingleton.getInstance ();
+    }
+
+    public void destroy (){}
+    public void service (HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {}
+}
+</code></pre>
+
+<p>Now, create a Data Transfer Object (DTO) / Value Object (VO) for storing the values.
+The VO/DTO will contain just two getters and setters, one for the Column Display name and the other for the bean property. This will be a POJO.</p>
+
+<h6 id="populate-the-application-context">Populate the Application context</h6>
+
+<p>When the container starts, populate the list in the application context, from the property file or from the data source.
+If you are having a separate page to choose the columns displayed, you can use the same list to render the values initially.
+Similarly if the user has changed his preference then update the application context accordingly.
+This can be done during the Login Action, once the user is authorized and authenticated.
+You can use your own logic to get all the user preference and then update list with DTO’s/VO’s containing the display name and the property name.
+This list is updated in the application context against the primary key.
+Before updating the application context check if the PK is already present in the Hash Table if yes, update or create a new entry.</p>
+
+<p>A sample property file will look like the one given below. By using different keys, we can have entries for different pages.
+Also the columns to be displayed to the user irrespective of the individual preference can also be marked here under a different key.
+The columns users are not allowed to modify are added to the rendering list once the request is got from the particular page and not during the logon time.
+The values are appended to the modifiable columns list and rendered to the user.</p>
+
+<pre><code class="properties">Validations$Optional=Plan #, Plan Name, Administrator
+Validations$Core= Plan Val Description, Plan Val Status
+
+# Optional represents the Columns users can modify
+# Core represents the Columns users can’t modify
+
+Validations$Plan#=strClientExtEntityId
+Validations$PlanName=strPlanName
+Validations$Administrator=strAdministrator
+Validations$PlanValDescription=strDescription
+Validations$PlanValStatus=strStatus
+</code></pre>
+
+<h6 id="rendering-logic">Rendering Logic</h6>
+
+<p>Once the values are available in the session, using JSP, logic iterate, render the Column names.
+Then to display the values from the result set, use the logic iterate with the list containing the values for the page,
+which is used to render the &lt;tr&gt; tag and inside that logic iterate, use another logic iterate,
+which is used to render the columns and use a bean define tag to get the column name properties in a scriplet variable and then use a bean define tag to display the value of the property.
+This logic is highly dynamic.</p>
+
+<p>To display the column names,</p>
+
+<pre><code class="jsp">&lt;logic:iterate name="&lt;Form Bean Name&gt;" id="testId" property="&lt;Name of the List&gt;" &gt;
+    &lt;td&gt;
+        &lt;bean:write name=" testId " property="&lt;Col Disp Name&gt;"/&gt;
+    &lt;/td&gt;
+&lt;/logic:iterate&gt;
+</code></pre>
+
+<p>To display the result set,</p>
+
+<pre><code class="jsp">&lt;logic:iterate name="&lt;Form Name&gt;" id="outerId" property="&lt;Property of the Hitlist&gt;"&gt;
+    &lt;tr&gt;
+        &lt;logic:iterate name="&lt;Form Name&gt;" id="innerId" property="&lt;Name of the List&gt;" &gt;
+        &lt;bean:define name="innerId" id="propId" property="&lt;Col Property&gt;" type="String"/&gt;
+            &lt;td&gt;
+                &lt;bean:write name="outerId" property="&lt;%= propId %&gt;" /&gt;
+            &lt;/td&gt;
+        &lt;/logic:iterate&gt;
+    &lt;/tr&gt;
+&lt;/logic:iterate&gt;
+</code></pre>
+
+<p>We also will have situations to display hyperlinks, textboxes etc. in the result set, the same logic can be used to display the different objects in the JSP.
+Just before the bean write tag, have a logic equal tag to check for specific types and render the display.</p>
+
+<p>This architecture is highly customizable and can be easily plugged in into any existing J2EE application. Also this can be easily enhanced to incorporate new functionalities.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/j2ee/" rel="tag">J2EE</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/struts/" rel="tag">Struts</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jsp/" rel="tag">JSP</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/java-string-concatenation-and-performance/" rel="bookmark">Java String Concatenation and Performance</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
+This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
+But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
+Given that String is immutable, for large number of string concatenation operations, using (+) will give us a worst performance.
+But how bad ? How StringBuffer, StringBuilder or String.concat() performs if we put them on a performance test ?.
+This article will try to answer those questions.</p>
+
+<p>We will be using <a href="https://github.com/perf4j/perf4j">Perf4J</a> to calculate the performance, since this library will give us aggregated performance statistics
+like mean, minimum, maximum, standard deviation over a set time span. In the code, we will concatenate a string (*)
+repeatedly 50,000 times and this iteration will be performed 21 times so that we can get a good standard deviation.
+The following methods will be used to concatenate strings.</p>
+
+<ul>
+<li>Concatenation Operator (+)</li>
+<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/String.html#concat%28java.lang.String%29">String concat method</a> - concat(String str)</li>
+<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/StringBuffer.html#append%28java.lang.String%29">StringBuffer append method</a> - append(String str)</li>
+<li><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/StringBuilder.html#append%28java.lang.String%29">StringBuilder append method</a> - append(String str)</li>
+</ul>
+
+<p>And finally we will look at the byte code to see how each of these operations perform. Let’s start building the class.
+Note that each of the block in the code should be wrapped around the Perf4J library to calculate the performance in each iteration.
+Let’s define the outer and inner iterations first.</p>
+
+<pre><code class="java">private static final int OUTER_ITERATION=20;
+private static final int INNER_ITERATION=50000;
+</code></pre>
+
+<p>Now let’s implement each of the four methods mentioned in the article.
+Nothing fancy here, plain implementations of (+), String.concat(), StringBuffer.append() &amp; StringBuilder.append().</p>
+
+<pre><code class="java">String addTestStr = "";
+String concatTestStr = "";
+StringBuffer concatTestSb = null;
+StringBuilder concatTestSbu = null;
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringAddConcat");
+    addTestStr = "";
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        addTestStr += "*";
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringConcat");
+    concatTestStr = "";
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestStr = concatTestStr.concat("*");
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringBufferConcat");
+    concatTestSb = new StringBuffer();
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestSb.append("*");
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringBuilderConcat");
+    concatTestSbu = new StringBuilder();
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestSbu.append("*");
+    stopWatch.stop();
+}
+</code></pre>
+
+<p>Let’s run this program and generate the performance metrics. I ran this program in a 64-bit OS (Windows 7), 32-bit JVM (7-ea), Core 2 Quad CPU (2.00 GHz) with 4 GB RAM.</p>
+
+<p>The output from the 21 iterations of the program is plotted below.</p>
+
+<p><img src="/media/images/00009/java-string-concatenation-and-performance.png#floatcenter" alt="" /></p>
+
+<p>Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
+We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.
+I have included the whole byte code in the download package, but let’s have a look at the below snippet.</p>
+
+<pre><code class="bytecode">45: new #7; //class java/lang/StringBuilder
+48: dup
+49: invokespecial #8; //Method java/lang/StringBuilder."&lt;init&gt;":()V
+52: aload_1
+53: invokevirtual #9; //Method java/lang/StringBuilder.append:
+    (Ljava/lang/String;)Ljava/lang/StringBuilder;
+56: ldc #10; //String *
+58: invokevirtual #9; //Method java/lang/StringBuilder.append:
+    (Ljava/lang/String;)Ljava/lang/StringBuilder;
+61: invokevirtual #11; //Method java/lang/StringBuilder.toString:()
+    Ljava/lang/String;
+64: astore_1
+</code></pre>
+
+<p>This is the byte code for String.concat(), and its clear from this that the String.concat is using StringBuilder for concatenation and the performance should be as good as String Builder.
+But given that the source object being used is String, we do have some performance loss in String.concat.</p>
+
+<p>So for the simple operations we should use String.concat compared to (+), if we don’t want to create a new instance of StringBuffer/Builder.
+But for huge operations, we shouldn’t be using the concat operator, as seen in the performance results it will bring down the application to its knees and spike up the CPU utilization.
+To have the best performance, the clear choice is StringBuilder as long as you do not need thread-safety or synchronization.</p>
+
+<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/string-concatenation-perf">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/performance/" rel="tag">Performance</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/core-java/" rel="tag">Core Java</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+
+		
+<div class="pagination clearfix">
+	<span class="pagination__item pagination__item--current">1/5</span>
+	<a class="pagination__item pagination__item--next" href="/categories/programming/page/2/">»</a>
+</div>
+
+	</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>

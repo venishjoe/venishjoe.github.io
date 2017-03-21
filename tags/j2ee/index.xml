@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>J2ee on VENISHJOE.NET</title>
+    <link>/tags/j2ee/index.xml</link>
+    <description>Recent content in J2ee on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/j2ee/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Dynamic Columns in JSP Model with Struts Framework</title>
+      <link>/post/dynamic-columns-in-jsp-model-with-struts/</link>
+      <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/dynamic-columns-in-jsp-model-with-struts/</guid>
+      <description>&lt;p&gt;While developing web applications, we will come across a lot of scenarios where we should use dynamic columns depending on the entitlement of the user or
+from the result set depending on the data itself. Dynamic columns in web applications give control to the user on what he wants to see
+(specially when we have a huge amount of data to work with). For applications with sensitive data,
+this can be even extended to act as a security layer where the access to specific data can be controlled with high precision.&lt;/p&gt;
+
+&lt;p&gt;In this article, I will explain one of the methods to implement this in any J2EE application with little or no code change.&lt;/p&gt;
+
+&lt;h5 id=&#34;high-level-architecture&#34;&gt;High Level Architecture&lt;/h5&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In a nut shell, this design uses the Application Context of the container to maintain the values pertaining to a particular user,
+if the requirement demands not to maintain the preference after a user session is terminated, then it can be achieved by destroying the object stored in the context.&lt;/p&gt;
+
+&lt;p&gt;We will start by creating a singleton class, which will be used to store the user preference about the columns.
+The user preference object can be mapped  against the user id or any other primary key, so that different preferences are maintained for different users.
+While the container starts, the instance for the singleton will be created. The default preferences can be loaded from a property / xml file or from a data store (DB).
+This object will contain the preferences of different pages with the different key names so that the same object can be used to maintain the preference across the application.
+This will be read during the logon operation and if the object in the application context doesn&amp;rsquo;t contain any values
+(if the user logs in for the first time or in an application where the preference is specific to the session) then the default values are loaded. Once the page loads,
+the preference can be read from the application context and can be  presented to the user. If the user edits his preferences, it will be updated in the application context.
+Note that the application context is not persistent between container restarts, so appropriate mechanisms should be taken to store the data.&lt;/p&gt;
+
+&lt;h5 id=&#34;implementation&#34;&gt;Implementation&lt;/h5&gt;
+
+&lt;p&gt;Let’s go through the implementation now. The following steps describe how to integrate this component to an existing Struts application.&lt;/p&gt;
+
+&lt;h6 id=&#34;start-up-servlet-and-initializing-the-singleton-class&#34;&gt;Start-up servlet and initializing the Singleton Class&lt;/h6&gt;
+
+&lt;p&gt;Create an Initializer Servlet and make an entry for the same in the web.xml file so that the Servlet starts when the container is initialized.
+Make sure the load-on-startup is set to 1, which ensures that the application server loads the servlet while startup.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;xmls&#34;&gt;&amp;lt;servlet&amp;gt;
+    &amp;lt;servlet-name&amp;gt; InitializerServlet &amp;lt;/servlet-name&amp;gt;
+    &amp;lt;servlet-class&amp;gt;com.startup.common.InitializerServlet&amp;lt;/servlet-class&amp;gt;
+    &amp;lt;load-on-startup&amp;gt; 1 &amp;lt;/load-on-startup&amp;gt;
+&amp;lt;/servlet&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next, create a Singleton class, which contains getter and setter methods for dynamic column preference, the object can be any collection,
+we are using Hash Map in this example which will be used to store the primary key against the list containing the preference.
+The set &amp;amp; get methods in the Singleton should be synchronized so that the simultaneous access is restricted. Also override the clone() method in your singleton.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class AppSingleton implements Serializable {
+    private Hashtable cusomizeViewValues = null;
+    private static AppSingleton appSingleton = null;
+
+    private AppSingleton (){ }
+
+    public synchronized void setCusomizeViewValues (Hashtable cusomizeViewValues){
+        this.cusomizeViewValues = cusomizeViewValues;
+    }
+
+    public static synchronized AppSingleton getInstance () throws Exception {
+        try {
+            if (appSingleton == null)
+                return new AppSingleton ();
+          } catch (Exception e) {
+            throw new Exception();
+        }
+    }
+
+    public Object clone() throws CloneNotSupportedException{
+        throw new CloneNotSupportedException();
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In the startup servlet, create an instance of the singleton class. When created, the object will be available in the application context of the container,
+and no one will be able to create another instance, until the object created in startup is destroyed.
+Since we have overridden the clone method, no one will be able to clone the particular object.
+These measures are to ensure the integrity of the user preference stored in the singleton.
+A sample Initializer servlet will look like the following code.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class InitializerServlet extends HttpServlet {
+    public void init () throws ServletException {
+        AppSingleton appSingleton = AppSingleton.getInstance ();
+    }
+
+    public void destroy (){}
+    public void service (HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, create a Data Transfer Object (DTO) / Value Object (VO) for storing the values.
+The VO/DTO will contain just two getters and setters, one for the Column Display name and the other for the bean property. This will be a POJO.&lt;/p&gt;
+
+&lt;h6 id=&#34;populate-the-application-context&#34;&gt;Populate the Application context&lt;/h6&gt;
+
+&lt;p&gt;When the container starts, populate the list in the application context, from the property file or from the data source.
+If you are having a separate page to choose the columns displayed, you can use the same list to render the values initially.
+Similarly if the user has changed his preference then update the application context accordingly.
+This can be done during the Login Action, once the user is authorized and authenticated.
+You can use your own logic to get all the user preference and then update list with DTO’s/VO’s containing the display name and the property name.
+This list is updated in the application context against the primary key.
+Before updating the application context check if the PK is already present in the Hash Table if yes, update or create a new entry.&lt;/p&gt;
+
+&lt;p&gt;A sample property file will look like the one given below. By using different keys, we can have entries for different pages.
+Also the columns to be displayed to the user irrespective of the individual preference can also be marked here under a different key.
+The columns users are not allowed to modify are added to the rendering list once the request is got from the particular page and not during the logon time.
+The values are appended to the modifiable columns list and rendered to the user.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;properties&#34;&gt;Validations$Optional=Plan #, Plan Name, Administrator
+Validations$Core= Plan Val Description, Plan Val Status
+
+# Optional represents the Columns users can modify
+# Core represents the Columns users can’t modify
+
+Validations$Plan#=strClientExtEntityId
+Validations$PlanName=strPlanName
+Validations$Administrator=strAdministrator
+Validations$PlanValDescription=strDescription
+Validations$PlanValStatus=strStatus
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h6 id=&#34;rendering-logic&#34;&gt;Rendering Logic&lt;/h6&gt;
+
+&lt;p&gt;Once the values are available in the session, using JSP, logic iterate, render the Column names.
+Then to display the values from the result set, use the logic iterate with the list containing the values for the page,
+which is used to render the &amp;lt;tr&amp;gt; tag and inside that logic iterate, use another logic iterate,
+which is used to render the columns and use a bean define tag to get the column name properties in a scriplet variable and then use a bean define tag to display the value of the property.
+This logic is highly dynamic.&lt;/p&gt;
+
+&lt;p&gt;To display the column names,&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;jsp&#34;&gt;&amp;lt;logic:iterate name=&#34;&amp;lt;Form Bean Name&amp;gt;&#34; id=&#34;testId&#34; property=&#34;&amp;lt;Name of the List&amp;gt;&#34; &amp;gt;
+    &amp;lt;td&amp;gt;
+        &amp;lt;bean:write name=&#34; testId &#34; property=&#34;&amp;lt;Col Disp Name&amp;gt;&#34;/&amp;gt;
+    &amp;lt;/td&amp;gt;
+&amp;lt;/logic:iterate&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To display the result set,&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;jsp&#34;&gt;&amp;lt;logic:iterate name=&#34;&amp;lt;Form Name&amp;gt;&#34; id=&#34;outerId&#34; property=&#34;&amp;lt;Property of the Hitlist&amp;gt;&#34;&amp;gt;
+    &amp;lt;tr&amp;gt;
+        &amp;lt;logic:iterate name=&#34;&amp;lt;Form Name&amp;gt;&#34; id=&#34;innerId&#34; property=&#34;&amp;lt;Name of the List&amp;gt;&#34; &amp;gt;
+        &amp;lt;bean:define name=&#34;innerId&#34; id=&#34;propId&#34; property=&#34;&amp;lt;Col Property&amp;gt;&#34; type=&#34;String&#34;/&amp;gt;
+            &amp;lt;td&amp;gt;
+                &amp;lt;bean:write name=&#34;outerId&#34; property=&#34;&amp;lt;%= propId %&amp;gt;&#34; /&amp;gt;
+            &amp;lt;/td&amp;gt;
+        &amp;lt;/logic:iterate&amp;gt;
+    &amp;lt;/tr&amp;gt;
+&amp;lt;/logic:iterate&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We also will have situations to display hyperlinks, textboxes etc. in the result set, the same logic can be used to display the different objects in the JSP.
+Just before the bean write tag, have a logic equal tag to check for specific types and render the display.&lt;/p&gt;
+
+&lt;p&gt;This architecture is highly customizable and can be easily plugged in into any existing J2EE application. Also this can be easily enhanced to incorporate new functionalities.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

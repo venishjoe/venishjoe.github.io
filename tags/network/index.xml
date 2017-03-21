@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Network on VENISHJOE.NET</title>
+    <link>/tags/network/index.xml</link>
+    <description>Recent content in Network on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <atom:link href="/tags/network/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Dynamically Load Compiled Java Class as a Byte Array and Execute</title>
+      <link>/post/dynamically-load-compiled-java-class/</link>
+      <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/dynamically-load-compiled-java-class/</guid>
+      <description>&lt;p&gt;As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
+This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
+I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
+(which can be over the network) and execute the array of bytes.&lt;/p&gt;
+
+&lt;p&gt;So the question arises, why should we write a custom class loader ? There are some distinct advantages. Some of them below&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;We can load a class over any network protocol. Since the java class can be converted to a series of numbers (array of bytes), we can use most of the protocols.&lt;/li&gt;
+&lt;li&gt;Load Dynamic classes based on the type of user, especially useful when you want to validate the license of your software over the web and if you are paranoid about the security.&lt;/li&gt;
+&lt;li&gt;More flexible and secure, you can encrypt the byte stream (asymmetric or symmetric) ensuring safer delivery.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For this article we will be creating three classes&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;JavaClassLoader – The custom class loader which will load the array of bytes and execute. In other words, the client program.&lt;/li&gt;
+&lt;li&gt;Class2Byte – The Java class which converts any compiled class / object to a array of bytes&lt;/li&gt;
+&lt;li&gt;ClassLoaderInput – The class which will be converted to array of bytes and transferred&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Let’s divide this article into two sections, in the fist section we will convert the java class to array of bytes and in the second section, we will load that array.&lt;/p&gt;
+
+&lt;h5 id=&#34;create-convert-the-java-class-to-array-of-bytes&#34;&gt;Create &amp;amp; Convert the Java class to array of bytes&lt;/h5&gt;
+
+&lt;p&gt;Let’s write a simple class (ClassLoaderInput) which just prints a line. This is the class which will be converted to a byte array.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class ClassLoaderInput {
+    public void printString() {
+        System.out.println(&#34;Hello World!&#34;);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, let’s write another class (Class2Byte) which will convert the ClassLoaderInput to a byte of array.
+The concept to convert the file is simple, compile the above file and load the class file through input stream and with an offset
+read and convert the class to bytes and write the output in to another out stream.
+We need these bytes as a comma separated value, so we will use StringBuffer to add comma between the bytes.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;int _offset=0;
+int _read=0;
+
+File fileName = new File(args [0]);
+InputStream fileInputStream = new FileInputStream(fileName);
+FileOutputStream fileOutputStream = new FileOutputStream(args[1]);
+PrintStream printStream = new PrintStream(fileOutputStream);
+StringBuffer bytesStringBuffer = new StringBuffer();
+
+byte[] byteArray = new byte[(int)fileName.length()];
+while (_offset &amp;lt; byteArray.length &amp;amp;&amp;amp;
+    (_read=fileInputStream.read(byteArray, _offset,
+    byteArray.length-_offset)) &amp;gt;= 0)
+        _offset += _read;
+
+fileInputStream.close();
+for (int index = 0; index &amp;lt; byteArray.length; index++)
+    bytesStringBuffer.append(byteArray[index]+&#34;,&#34;);
+
+printStream.print(bytesStringBuffer.length()==0 ? &#34;&#34; :
+    bytesStringBuffer.substring(0, bytesStringBuffer.length()-1));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now let’s run this file and generate the output. A sample output from my machine is below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
+custom class loader which will “reconstruct” the class from these bytes and run it,
+without any physical trace in the client machine (the array of bytes will be on memory).&lt;/p&gt;
+
+&lt;h5 id=&#34;load-the-array-of-bytes-and-execute&#34;&gt;Load the array of bytes and execute&lt;/h5&gt;
+
+&lt;p&gt;Now, to the important part of this article, we are going to write a custom class loader which will load those bunch of numbers (array) and execute them.
+The array of bytes can be transferred over the network but in this example, we will define it as a string in the class loader for demonstration purpose.&lt;/p&gt;
+
+&lt;p&gt;Let’s start by defining the array of bytes.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;private int[] data = {-54,-2,-70,-66,0,0,0,51,0,31,10,0,6,0,17,9,0,18,0,19,8,
+    0,20,10,0,21,0,22,7,0,23,7,0,24,1,0,6,60,105,110,105,116,62,1,0,3,40,41,86,1,
+    0,4,67,111,100,101,1,0,15,76,105,110,101,78,117,109,98,101,114,84,97,98,108,
+    101,1,0,18,76,111,99,97,108,86,97,114,105,97,98,108,101,84,97,98,108,101,1,0,
+    4,116,104,105,115,1,0,18,76,67,108,97,115,115,76,111,97,100,101,114,73,110,
+    112,117,116,59,1,0,11,112,114,105,110,116,83,116,114,105,110,103,1,0,10,83,
+    111,117,114,99,101,70,105,108,101,1,0,21,67,108,97,115,115,76,111,97,100,101,
+    114,73,110,112,117,116,46,106,97,118,97,12,0,7,0,8,7,0,25,12,0,26,0,27,1,0,
+    12,72,101,108,108,111,32,87,111,114,108,100,33,7,0,28,12,0,29,0,30,1,0,16,67,
+    108,97,115,115,76,111,97,100,101,114,73,110,112,117,116,1,0,16,106,97,118,97,
+    47,108,97,110,103,47,79,98,106,101,99,116,1,0,16,106,97,118,97,47,108,97,110,
+    103,47,83,121,115,116,101,109,1,0,3,111,117,116,1,0,21,76,106,97,118,97,47,105,
+    111,47,80,114,105,110,116,83,116,114,101,97,109,59,1,0,19,106,97,118,97,47,105,
+    111,47,80,114,105,110,116,83,116,114,101,97,109,1,0,7,112,114,105,110,116,108,
+    110,1,0,21,40,76,106,97,118,97,47,108,97,110,103,47,83,116,114,105,110,103,59,
+    41,86,0,33,0,5,0,6,0,0,0,0,0,2,0,1,0,7,0,8,0,1,0,9,0,0,0,47,0,1,0,1,0,0,0,5,42,
+    -73,0,1,-79,0,0,0,2,0,10,0,0,0,6,0,1,0,0,0,1,0,11,0,0,0,12,0,1,0,0,0,5,0,12,0,
+    13,0,0,0,1,0,14,0,8,0,1,0,9,0,0,0,55,0,2,0,1,0,0,0,9,-78,0,2,18,3,-74,0,4,-79,
+    0,0,0,2,0,10,0,0,0,10,0,2,0,0,0,3,0,8,0,4,0,11,0,0,0,12,0,1,0,0,0,9,0,12,0,13,
+    0,0,0,1,0,15,0,0,0,2,0,16};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The conversion of these bytes to class is done by the &lt;a href=&#34;http://java.sun.com/j2se/1.3/docs/api/java/lang/ClassLoader.html#defineClass%28byte[],%20int,%20int%29&#34;&gt;ClassLoader.defineClass()&lt;/a&gt;
+method We should supply the stream of bytes that make up the class data.
+The bytes in positions off through off+len-1 should have the format of a valid class file as defined by the &lt;a href=&#34;http://java.sun.com/docs/books/vmspec/&#34;&gt;Java Virtual Machine Specification&lt;/a&gt;.
+The offset and length will be the additional parameters. Once the defineClass converts the array to class,
+then we can use reflection to execute the methods in the class.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;JavaClassLoader _classLoader = new JavaClassLoader();
+byte[] rawBytes = new byte[_classLoader.data.length];
+for (int index = 0; index &amp;lt; rawBytes.length; index++)
+    rawBytes[index] = (byte) _classLoader.data[index];
+Class regeneratedClass = _classLoader.defineClass(args[0],
+    rawBytes, 0, rawBytes.length);
+regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, let’s compile the class loader and run. The the class file name &amp;amp; method name should be passed as a run time argument.
+If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
+Sample output from my machine below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Signing Java Objects for Secure Transfer</title>
+      <link>/post/signing-java-objects-for-secure-transfer/</link>
+      <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/signing-java-objects-for-secure-transfer/</guid>
+      <description>&lt;p&gt;In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
+object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
+when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.&lt;/p&gt;
+
+&lt;p&gt;In this article, we will build two simple applications, one which generates the object, the keys (public &amp;amp; private) and signs the object with the private key.
+Other application which verifies the signed object in other end over the network or another application in the same machine. Both these apps can run independently in different machines.
+For signing the object we will be using Public-Key cryptography. This is one of the most widely used standards to sign data along with DSA &amp;amp; SHA1PRNG
+(cryptographically strong pseudo-random number generator (PRNG)).
+Public-Key cryptography is a asymmetric key algorithm, where the key used to encrypt a message is not the same as the key used to decrypt it.&lt;/p&gt;
+
+&lt;p&gt;This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
+and in the second part, we will verify it.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;h5 id=&#34;sign-the-java-object&#34;&gt;Sign the Java Object&lt;/h5&gt;
+
+&lt;p&gt;First of all we need a class which will generate a public and private key.
+We will create a class named SecurityUtil which will generate those based on DSA (we can use RSA or any other algorithm as long as its available)
+and we will generate a cryptographically strong pseudo-random number generator (PRNG) which can be clubbed along with DSA (SHA1PRNG).
+The strength of the key will be 1024.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;protected KeyPair generateKey () throws Exception {
+    KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(&#34;DSA&#34;);
+    SecureRandom secureRandom = SecureRandom.getInstance(&#34;SHA1PRNG&#34;);
+    keyPairGen.initialize(1024,secureRandom);
+    KeyPair keyPair = keyPairGen.generateKeyPair();
+    return keyPair;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next we will create a class named EmployeeValueObject which is nothing but a POJO with a HashMap getter/setter.
+This will be the object which we will be transferring over the network/application. Since we serialize the object before transferring, this class should implement Serializable.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public class EmployeeValueObject implements Serializable {
+    HashMap employeeSalary = new HashMap();
+    public void setSalary (HashMap employeeSalary){
+        this.employeeSalary = employeeSalary;
+    }
+
+    public HashMap getSalary () {
+        return employeeSalary;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we have all the supporting classes which we need and let’s start building the main application.
+Let’s call this class EmployeeDetails and this will create an object for the POJO which we created in our previous step and populate with some data.
+In addition to that, we will sign the POJO object and then serialize to a file.
+In this example we will be also serializing the public key to transfer to the other end.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)&lt;/p&gt;
+
+&lt;p&gt;Let’s create the POJO and populate with some data in the HashMap.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;EmployeeValueObject employeeVO = new EmployeeValueObject();
+employeeVO.setSalary(populateData());
+
+private static HashMap populateData (){
+    HashMap employeeSalary = new HashMap ();
+    employeeSalary.put(&#34;3&#34;, &#34;Johns, Galvin D. --&gt; $18,000&#34;);
+    employeeSalary.put(&#34;4&#34;, &#34;Weber, Murphy I. --&gt; $5,000&#34;);
+
+    return employeeSalary;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now let’s generate the public and private keys from SecutityUtil and sign the POJO which we created in the above step.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;KeyPair keyPair = new SecurityUtil().generateKey();
+PrivateKey privateKey = keyPair.getPrivate();
+PublicKey publicKey = keyPair.getPublic();
+
+Signature digitalSignature = Signature.getInstance(privateKey.getAlgorithm());
+SignedObject digitalSignedObj =
+    new SignedObject(employeeVO, privateKey, digitalSignature);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now digitalSignedObj is a digitally signed data with the private key which we generated. Now let’s serialize this object for the secure transfer.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;ileOutputStream serializedFileOutput = new FileOutputStream(&#34;employee.ser&#34;);
+ObjectOutputStream serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(digitalSignedObj);
+serializedObjOutput.close();
+serializedFileOutput.close();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We will also serialize the public key so that for this example we can send both of them to another machine to verify.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;serializedFileOutput = new FileOutputStream(&#34;publickey.ser&#34;);
+serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(publicKey);
+serializedObjOutput.close();
+serializedFileOutput.close();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This will complete the creation of application one. When you run this application, it will create two new files in the same directory.
+employee.ser – which is the signed and serialized POJO (Salary details) &amp;amp; publickey.ser – public key to verify the POJO.
+Now using the appropriate protocol send these files to the other application (remote or local) and let’s start building the verification part.&lt;/p&gt;
+
+&lt;h5 id=&#34;verification-amp-de-serializing-the-java-object&#34;&gt;Verification &amp;amp; De-Serializing the Java Object&lt;/h5&gt;
+
+&lt;p&gt;As a start we have the files employee.ser &amp;amp; publickey.ser. Let’s start building up the class to verify and de-serialize these files.
+Let’s name this class DecryptEmployee. The following code should de-serialize the objects.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;FileInputStream serializedPublicKeyIn = new FileInputStream(&#34;publicKey.ser&#34;);
+ObjectInputStream serializedPublicKey = new ObjectInputStream(serializedPublicKeyIn);
+PublicKey publicKey = (PublicKey) serializedPublicKey.readObject();
+
+FileInputStream serializedEmployeeIn = new FileInputStream(&#34;employee.ser&#34;);
+ObjectInputStream serializedEmployee = new ObjectInputStream(serializedEmployeeIn);
+SignedObject digitalSignedObj = (SignedObject) serializedEmployee.readObject();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since the public key was not signed, publicKey variable will be readable.
+But the employee POJO was signed, so we are reading the object as a SignedObject. Let’s move forward and verify this.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;Signature digitalSignature = Signature.getInstance(publicKey.getAlgorithm());
+boolean decryptFlag = digitalSignedObj.verify(publicKey, digitalSignature);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The decryptFlag contains the status of the verification.
+If the public key is incorrect or if the object was tampered, then this will return false and we won’t be able to verify the object.
+If its true then everything looks good and we can successfully verify the POJO and print the values from HashMap.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;if(decryptFlag) {
+    EmployeeValueObject employeeVO = (EmployeeValueObject) digitalSignedObj.getObject();
+    HashMap employeeSalary = (HashMap) employeeVO.getSalary();
+    Collection collHashMap = employeeSalary.values();
+    Iterator collectionIterator = collHashMap.iterator();
+    while (collectionIterator.hasNext()) {
+        System.out.println(collectionIterator.next());
+    }
+} else {
+    System.out.println (&#34;Decryption Failed. Please check the Keys.&#34;);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If you run this application, we will get an output similar to below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.&lt;/p&gt;
+
+&lt;p&gt;UPDATE: SignedObject signs the object, but it doesn&amp;rsquo;t encrypt it. So if you need encryption, you can use the Cipher class in Java.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
+      <title>Simple Proxy Server in Java</title>
+      <link>/post/simple-proxy-server-in-java/</link>
+      <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>/post/simple-proxy-server-in-java/</guid>
+      <description>&lt;p&gt;In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
+From &lt;a href=&#34;http://en.wikipedia.org/wiki/Proxy_server&#34;&gt;Wikipedia&lt;/a&gt;, &amp;ldquo;a proxy server is a server (a computer system or an application program)
+that acts as an intermediary for requests from clients seeking resources from other servers.&amp;ldquo;The proxy server generally has some resources,
+or has access to some resources and when it receives request from a client, it access the appropriate resource and sends back the response.&lt;/p&gt;
+
+&lt;p&gt;So it serves two purposes, giving access to a resource which the client do not have access and it hides the real client who needs the resource.
+The second part is used for the anonymous browsing in Internet using anonymous proxy servers.
+Although this may not be as “anonymous” as it sounds because the proxy server which you connect to can maintain logs about the clients who are connecting to the server,
+and also the bigger risk being the data theft. Since the “anonymous” proxy server has access to all the request you send,
+there is risk of that data being exposed unless there is some kind of encryption in place between the client and the proxy server.&lt;/p&gt;
+
+&lt;p&gt;If you are in a network, and the machine which you are using don’t have access to Internet but another machine in the same subnet has access to Internet, then you can run this
+proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
+where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
+We will start by declaring some constants.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;int proxyServerPortNumber = 7879;
+int webServerPortNumber = 80;
+String webServerIpAddress = &#34;192.168.1.1&#34;;
+final int PROXY_SERVER_TIME_OUT = 5000;
+final int SOCKET_TIME_OUT = 2000;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;proxyServerPortNumber defines the port where the proxy server will be listening. You can use any port number which is not used by other process / standard port.&lt;/p&gt;
+
+&lt;p&gt;webServerIpAddress and webServerPortNumber defines the IP/port where the server can access the resources. Since we are designing this to access websites over http,
+the port is defined as 80 and the IP should be a machine which has Internet access (can be localhost too)&lt;/p&gt;
+
+&lt;p&gt;PROXY_SERVER_TIME_OUT and SOCKET_TIME_OUT are standard parameters defined for Server and network socket timeout. You can adjust this based on your needs.&lt;/p&gt;
+
+&lt;p&gt;Now we need to start the Java class to bind to the port number defined and to run in a infinite loop or as a daemon thread, so that it keeps on listening for requests.
+In this example, we will be using the infinite loop.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;try {
+    serverSocket = new ServerSocket(proxyServerPortNumber);
+} catch(Exception exc) {
+        System.exit(0);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now the process will be listening in the port 7879 for requests from clients. Now, let’s open an infinte loop and make a connection to the resource, in our case the web server.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;socketProxy = new Socket(InetAddress.getByName(webServerIpAddress),webServerPortNumber);
+socketProxy.setSoTimeout(PROXY_SERVER_TIME_OUT);
+socket = serverSocket.accept();
+socket.setSoTimeout(SOCKET_TIME_OUT);
+inputStream = socket.getInputStream();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The request from the client will be received by Input Stream, so once we are connected, we will be sending this Input Stream which is nothing but a normal HTTP REQ object
+to the server which has the resource or as in our case the machine connected to Internet. The server will respond with the response which will be a HTTP RES over the
+Java Output Stream. We will be forwarding this output stream to the client which will be rendered in the application which the client requested in.
+That is if the request was sent through command line, the entire HTML will be printed, if its a browser the page will be rendered.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;try {
+    while( (intCounter = in.read()) != -1) {
+        if(intCounter == -1) break;
+        if(!bREQ)
+            bREQ = true;
+        pOutputStream.write(intCounter);
+        if(byteCheckFl &amp;gt; 0) {
+            break;
+        }
+        if(intCounter == 13 &amp;amp;&amp;amp; intPrevCounter == 10)
+            byteCheckFl++;
+        intPrevCounter = intCounter;
+    }
+} catch(Exception e) {
+    if(!bREQ) {
+        continue;
+    }
+}
+
+pOutputStream.flush();
+pIutputStream = socketProxy.getInputStream();
+outputStream = socket.getOutputStream();
+try {
+    while( (intCounter = pIutputStream.read()) != -1) {
+        outputStream.write(intCounter);
+    }
+} catch(Exception e) {
+}
+outputStream.flush();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Make sure to close all the opened sockets and connections once the response is sent. Since this whole code is running in an infinite loop,
+the server will keep on waiting for the requests and sending the responses back. This is a crude implementation of the concept and there is
+room for a lot more improvements (like supporting SSL), but this should serve as a foundation to make the proxy a robust one.&lt;/p&gt;
+
+&lt;p&gt;We can easily make this Java class as a Win32 service, so that it will always run in background and starts along with the OS.
+That will need some work with JNI. I will explain that in a later post.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

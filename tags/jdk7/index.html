@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jdk7 - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="Jdk7" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="/tags/jdk7/" />
+
+
+
+<meta property="og:updated_time" content="2009-10-26T11:45:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="alternate" type="application/rss+xml" title="VENISHJOE.NET Feed" href="/tags/jdk7/index.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+	<div class="main-content loop content" role="main">
+		<header class="page-header">
+			<h1 class="page-header__title">Jdk7</h1>
+		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/recursive-file-tree-traversing-in-java-using-nio/" rel="bookmark">Recursive File Tree Traversing in Java using NIO.2</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In my <a href="/post/monitor-a-directory-for-changes-using-java/">previous article about NIO.2</a>,
+we have seen how to implement a service which monitors a directory recursively for any changes.
+In this article we will look at another improvement in JDK7 (NIO.2) called FileWatcher.
+This will allow us to implement a search or index. For example, we can find all the $some_pattern$ files in a given directory recursively and (or)
+delete / copy all the all the $some_pattern$ files in a file system.
+In a nutshell FileWatcher will get us a list of files from a file system based on a pattern which can be processed based on our requirement.</p>
+
+<p>The FileVistor is an interface and our class should implement it.
+We have two methods before the traversal starts at the directory level &amp; file level, and one method after the traversal is complete,
+which can be used for clean up or post processing. The important points from the interface is given in the below diagram.</p>
+
+<p><img src="/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter" alt="" /></p>
+
+<p>While I think FileVistor is the best way to handle this, JDK7 NIO.2 has given another option to achieve the same, a class named SimpleFileVistor (which implements FileVisitor).
+It should be self explanatory, a simplified version of FileVisitor.
+We can extend the SimpileFileVisitor into our class and then traverse the directory with overriding only the methods we need, and if any step fails we will get an IOException.</p>
+
+<p>According to me, FileVisitor is better because it forces you to implement the methods (sure, you can leave them blank)
+since these methods are really important if you plan to implement recursive delete / copy or work with symbolic links.
+For example, if you are copying some files to a directory you should make sure that the directory should be created
+first before copying which can be done in the preVisitDirectory().</p>
+
+<p>The other area of concern is symbolic links and how this will be handled by FileVisitor. This can be achieved using FileVisitOption enums.
+By default, the symbolic links are not followed so that we are not accidentally deleting any directories in a recursive delete.
+If you want to handle manually, there are two options FOLLOW_LINKS (follow the links) &amp; DETECT_CYCLES (catch circular references).</p>
+
+<p>If you want to exclude some directory from FileVisitor or if you are looking for a directory or a file in the file system and once you find it
+you want to stop searching that can be implemented by using the return type of FileVisitor, called FileVisitResult.
+SKIP_SUBTREE allows us to skip directories &amp; subdirectories. TERMINATE stops the traversing.</p>
+
+<p>The search can be initiated by the walkFileTree() method in Files class. This will take the starting directory (or root directory in your search) as a parameter.
+You can also define Integer.MAX_VALUE if you want to manually specify the depth.
+And as mentioned in the above diagram, define FileVisitOption for symbolic links if needed.</p>
+
+<p>Enough with the API description, let&rsquo;s write some sample code to implement what we discussed.
+We will be using the SimpleFileVisitor so that in our demo we don’t need to implement all the methods.</p>
+
+<p>Let’s start with defining the pattern which needs to be searched for. In this example,
+we will search for all the *txt file / directory names recursively in any given directory.
+This can be done with getPathMatcher() in FileSystems</p>
+
+<pre><code class="java">PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + "*txt*");
+</code></pre>
+
+<p>Now, let’s initiate the search by calling walkFileTree() as mentioned below. We are not defining anything specific for symbolic links so, by default its NO_FOLLOW.</p>
+
+<pre><code class="java">Files.walkFileTree(Paths.get("D://Search"), fileVisitor);
+</code></pre>
+
+<p>Let’s go through the implementations of class SimpleFileVisitor, we will be overriding only visitFile() &amp; preVisitDirectory() in this example,
+but its a good practice to override all the five methods so that we have more control over the search. The implementation is pretty simple,
+based on the pattern the below methods will search for a directory or file and print the path.</p>
+
+<pre><code class="java">@Override
+public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
+    if (filePath.getName() != null &amp;&amp; pathMatcher.matches(filePath.getName()))
+        System.out.println("FILE: " + filePath);
+    return FileVisitResult.CONTINUE;
+}
+
+@Override
+public FileVisitResult preVisitDirectory(Path directoryPath) {
+    if (directoryPath.getName() != null &amp;&amp; pathMatcher.matches(directoryPath.getName()))
+        System.out.println("DIR: " + directoryPath);
+    return FileVisitResult.CONTINUE;
+}
+</code></pre>
+
+<p>Once this is completed, we can use the postVisitDirectory() to perform additional tasks or any cleanup if needed. A sample output from my machine is given below.</p>
+
+<p><img src="/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter" alt="" /></p>
+
+<p>The complete source code is given below. Please note that you need JDK7 to run this code.
+Source is also available in <a href="https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2_file-visitor">my github</a> page.</p>
+
+<pre><code class="java">public class NIO2_FileVisitor extends SimpleFileVisitor&lt;Path&gt; {
+    private PathMatcher pathMatcher;
+
+    @Override
+    public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
+        if (filePath.getName() != null &amp;&amp; pathMatcher.matches(filePath.getName()))
+                System.out.println("FILE: " + filePath);
+        return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path directoryPath) {
+        if (directoryPath.getName() != null &amp;&amp; pathMatcher.matches(directoryPath.getName()))
+                System.out.println("DIR: " + directoryPath);
+        return FileVisitResult.CONTINUE;
+    }
+
+    public static void main(String[] args) throws IOException {
+        NIO2_FileVisitor fileVisitor = new NIO2_FileVisitor();
+        fileVisitor.pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + "*txt*");
+        Files.walkFileTree(Paths.get("D://Search"), fileVisitor);
+    }
+}
+</code></pre>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jdk7/" rel="tag">JDK7</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jsr/" rel="tag">JSR</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/nio.2/" rel="tag">NIO.2</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/java-ea/" rel="tag">Java EA</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="/post/monitor-a-directory-for-changes-using-java/" rel="bookmark">Monitor a Directory for Changes using Java</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>Many applications which we use on a day to day basis like a music organizer, file editors monitor the directory for any changes in the files/directories and
+take appropriate action in the application if there are any changes detected on the fly.
+Since Java do not have direct access to the system level calls (unless we use JNI, which will make the code platform specific)
+the only way to monitor any directory is to use a separate thread which will be using a lot of resources (memory &amp; disk I/O) to monitor the changes inside the directory.
+If we have sub-directories and need a recursive monitor, then the thread becomes more resource intensive.</p>
+
+<p>There was a JSR (Java Specification Request) requested to add / rewrite more I/O APIs for Java platform. This was implemented in JDK 7 as
+<a href="http://jcp.org/en/jsr/detail?id=203">JSR 203</a> with support for APIs like file system access, scalable asynchronous I/O operations,
+socket-channel binding and configuration, and multicast datagrams.</p>
+
+<p>JSR 203 is one of the big feature for JDK 7 (Developer Preview is available in java.sun.com) and its been implemented as the second I/O package is java,
+called as NIO.2. I will be looking into more of these packages in future posts, but in this,
+I will show how to monitor a directory and its sub-directories for any changes using NIO.2 (JDK 7).</p>
+
+<p>The APIs which we will be using <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchService.html">WatchService</a>
+(a watch service that watches registered objects for changes and events), <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchKey.html">WatchKey</a>
+(a token representing the registration of a watchable object with a WatchService) and <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchEvent.html">WatchEvent</a>
+(an event or a repeated event for an object that is registered with a WatchService) to monitor a directory. So, without further explanation, let’s start working on the code.</p>
+
+<p>Please note that you need JDK 7 to run this program. While writing this post,
+JDK 7 is available as a EA (Early Access) in <a href="http://java.sun.com/javase/downloads/ea.jsp">Java Early Access Downloads</a> page. Download the JDK and install it.</p>
+
+<p>The first step is to get a directory to monitor. Path is one of the new I/O API as a part of NIO.2 which gives us more control over the I/O.
+So let’s get the directory to watch, if you want to watch the directory recursively then there should be another boolean flag defined,
+but in this example we will watch only the parent directory.</p>
+
+<pre><code class="java">Path _directotyToWatch = Paths.get(args[0]);
+</code></pre>
+
+<p>Now let’s create a Watch service to the above directory and add a key to the service.
+In the watch key we can define what are all the events we need to look for.
+In this example we will monitor Create, Delete &amp; Rename/Modify of the files or directories in the path.</p>
+
+<pre><code class="java">WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+WatchKey watchKey = _directotyToWatch.register(
+    watcherSvc,ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+</code></pre>
+
+<p>Now we have all the variables defined. Let’s start a infinite loop to monitor the directory for any changes using WatchEvent.
+We will poll events in the directory and once some event is triggered (based on the WatchKey definition)
+we will print the type of event occurred and the name of the file/directory on which the event occurred. Once done, we will reset the watch key.</p>
+
+<pre><code class="java">while (true) {
+    watchKey=watcherSvc.take();
+    for (WatchEvent&lt;?&gt; event: watchKey.pollEvents()) {
+        WatchEvent&lt;Path&gt; watchEvent = castEvent(event);
+        System.out.println(event.kind().name().toString() + " "
+            + _directotyToWatch.resolve(watchEvent.context()));
+    watchKey.reset();
+    }
+}
+</code></pre>
+
+<p>Now to make the WatchEvent &lt;Path&gt; work, we should create a small utility as below ( this is the castEvent which is used in the above code).</p>
+
+<pre><code class="java">static &lt;T&gt; WatchEvent&lt;T&gt; castEvent(WatchEvent&lt;?&gt; event) {
+    return (WatchEvent&lt;T&gt;)event;
+}
+</code></pre>
+
+<p>Now compile the file and give a directory as a runtime parameter while running it.
+Once the program starts running, start creating some directories/files or modify/rename some files in the directory which you gave as a parameter,
+the program will start triggering the event and you should be able to watch the modifications in the console.
+A sample output from my machine is below.</p>
+
+<p><img src="/media/images/00006/monitor-a-directory-output.png#floatcenter" alt="" /></p>
+
+<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2-watch-folder">my github</a> page.</p>
+
+<pre><code class="java">import java.nio.file.*;
+import static java.nio.file.StandardWatchEventKind.*;
+
+static &lt;T&gt; WatchEvent&lt;T&gt; castEvent(WatchEvent&lt;?&gt; event) {
+    return (WatchEvent&lt;T&gt;)event;
+}
+
+public static void main (String args[]) throws Exception {
+    Path _directotyToWatch = Paths.get(args[0]);
+    WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+    WatchKey watchKey = _directotyToWatch.register(watcherSvc,
+        ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+
+    while (true) {
+        watchKey=watcherSvc.take();
+        for (WatchEvent&lt;?&gt; event: watchKey.pollEvents()) {
+            WatchEvent&lt;Path&gt; watchEvent = castEvent(event);
+            System.out.println(event.kind().name().toString() + " "
+                + _directotyToWatch.resolve(watchEvent.context()));
+            watchKey.reset();
+        }
+    }
+}
+</code></pre>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jdk7/" rel="tag">JDK7</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jsr/" rel="tag">JSR</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/nio.2/" rel="tag">NIO.2</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/java-ea/" rel="tag">Java EA</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+
+		
+	</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>

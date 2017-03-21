@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing Java Objects for Secure Transfer - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="Signing Java Objects for Secure Transfer" />
+<meta property="og:description" content="In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
+object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
+when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.
+
+In this article, we will build two simple applications, one which generates the object, the keys (public &amp; private) and signs the object with the private key.
+Other application which verifies the signed object in other end over the network or another application in the same machine. Both these apps can run independently in different machines.
+For signing the object we will be using Public-Key cryptography. This is one of the most widely used standards to sign data along with DSA &amp; SHA1PRNG
+(cryptographically strong pseudo-random number generator (PRNG)).
+Public-Key cryptography is a asymmetric key algorithm, where the key used to encrypt a message is not the same as the key used to decrypt it.
+
+This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
+and in the second part, we will verify it.
+
+
+
+Sign the Java Object
+
+First of all we need a class which will generate a public and private key.
+We will create a class named SecurityUtil which will generate those based on DSA (we can use RSA or any other algorithm as long as its available)
+and we will generate a cryptographically strong pseudo-random number generator (PRNG) which can be clubbed along with DSA (SHA1PRNG).
+The strength of the key will be 1024.
+
+protected KeyPair generateKey () throws Exception {
+    KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(&#34;DSA&#34;);
+    SecureRandom secureRandom = SecureRandom.getInstance(&#34;SHA1PRNG&#34;);
+    keyPairGen.initialize(1024,secureRandom);
+    KeyPair keyPair = keyPairGen.generateKeyPair();
+    return keyPair;
+}
+
+
+Next we will create a class named EmployeeValueObject which is nothing but a POJO with a HashMap getter/setter.
+This will be the object which we will be transferring over the network/application. Since we serialize the object before transferring, this class should implement Serializable.
+
+public class EmployeeValueObject implements Serializable {
+    HashMap employeeSalary = new HashMap();
+    public void setSalary (HashMap employeeSalary){
+        this.employeeSalary = employeeSalary;
+    }
+
+    public HashMap getSalary () {
+        return employeeSalary;
+    }
+}
+
+
+Now we have all the supporting classes which we need and let’s start building the main application.
+Let’s call this class EmployeeDetails and this will create an object for the POJO which we created in our previous step and populate with some data.
+In addition to that, we will sign the POJO object and then serialize to a file.
+In this example we will be also serializing the public key to transfer to the other end.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)
+
+Let’s create the POJO and populate with some data in the HashMap.
+
+EmployeeValueObject employeeVO = new EmployeeValueObject();
+employeeVO.setSalary(populateData());
+
+private static HashMap populateData (){
+    HashMap employeeSalary = new HashMap ();
+    employeeSalary.put(&#34;3&#34;, &#34;Johns, Galvin D. --&gt; $18,000&#34;);
+    employeeSalary.put(&#34;4&#34;, &#34;Weber, Murphy I. --&gt; $5,000&#34;);
+
+    return employeeSalary;
+}
+
+
+Now let’s generate the public and private keys from SecutityUtil and sign the POJO which we created in the above step.
+
+KeyPair keyPair = new SecurityUtil().generateKey();
+PrivateKey privateKey = keyPair.getPrivate();
+PublicKey publicKey = keyPair.getPublic();
+
+Signature digitalSignature = Signature.getInstance(privateKey.getAlgorithm());
+SignedObject digitalSignedObj =
+    new SignedObject(employeeVO, privateKey, digitalSignature);
+
+
+Now digitalSignedObj is a digitally signed data with the private key which we generated. Now let’s serialize this object for the secure transfer.
+
+ileOutputStream serializedFileOutput = new FileOutputStream(&#34;employee.ser&#34;);
+ObjectOutputStream serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(digitalSignedObj);
+serializedObjOutput.close();
+serializedFileOutput.close();
+
+
+We will also serialize the public key so that for this example we can send both of them to another machine to verify.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)
+
+serializedFileOutput = new FileOutputStream(&#34;publickey.ser&#34;);
+serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(publicKey);
+serializedObjOutput.close();
+serializedFileOutput.close();
+
+
+This will complete the creation of application one. When you run this application, it will create two new files in the same directory.
+employee.ser – which is the signed and serialized POJO (Salary details) &amp; publickey.ser – public key to verify the POJO.
+Now using the appropriate protocol send these files to the other application (remote or local) and let’s start building the verification part.
+
+Verification &amp; De-Serializing the Java Object
+
+As a start we have the files employee.ser &amp; publickey.ser. Let’s start building up the class to verify and de-serialize these files.
+Let’s name this class DecryptEmployee. The following code should de-serialize the objects.
+
+FileInputStream serializedPublicKeyIn = new FileInputStream(&#34;publicKey.ser&#34;);
+ObjectInputStream serializedPublicKey = new ObjectInputStream(serializedPublicKeyIn);
+PublicKey publicKey = (PublicKey) serializedPublicKey.readObject();
+
+FileInputStream serializedEmployeeIn = new FileInputStream(&#34;employee.ser&#34;);
+ObjectInputStream serializedEmployee = new ObjectInputStream(serializedEmployeeIn);
+SignedObject digitalSignedObj = (SignedObject) serializedEmployee.readObject();
+
+
+Since the public key was not signed, publicKey variable will be readable.
+But the employee POJO was signed, so we are reading the object as a SignedObject. Let’s move forward and verify this.
+
+Signature digitalSignature = Signature.getInstance(publicKey.getAlgorithm());
+boolean decryptFlag = digitalSignedObj.verify(publicKey, digitalSignature);
+
+
+The decryptFlag contains the status of the verification.
+If the public key is incorrect or if the object was tampered, then this will return false and we won’t be able to verify the object.
+If its true then everything looks good and we can successfully verify the POJO and print the values from HashMap.
+
+if(decryptFlag) {
+    EmployeeValueObject employeeVO = (EmployeeValueObject) digitalSignedObj.getObject();
+    HashMap employeeSalary = (HashMap) employeeVO.getSalary();
+    Collection collHashMap = employeeSalary.values();
+    Iterator collectionIterator = collHashMap.iterator();
+    while (collectionIterator.hasNext()) {
+        System.out.println(collectionIterator.next());
+    }
+} else {
+    System.out.println (&#34;Decryption Failed. Please check the Keys.&#34;);
+}
+
+
+If you run this application, we will get an output similar to below.
+
+
+
+This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.
+
+UPDATE: SignedObject signs the object, but it doesn&rsquo;t encrypt it. So if you need encryption, you can use the Cipher class in Java.
+
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/signing-java-objects-for-secure-transfer/" />
+
+
+
+<meta property="article:published_time" content="2009-10-13T22:45:00&#43;00:00"/>
+<meta property="article:modified_time" content="2009-10-13T22:45:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+<div class="main-content content" role="main" itemprop="mainContentOfPage">
+	<article class="post">
+		<header class="post__header clearfix">
+			<h1 class="post__title">Signing Java Objects for Secure Transfer</h1>
+			<p class="post__meta meta">
+				
+				<span class="post__meta-categories meta-categories">
+					<svg class="icon icon-category" height="16" viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="m7 2l1 2h8v11h-16v-13z"/></svg>
+					<a class="meta-categories__link" href="/categories/programming" rel="category">Programming</a>, <a class="meta-categories__link" href="/categories/network" rel="category">Network</a>, <a class="meta-categories__link" href="/categories/security" rel="category">Security</a></span>
+			</p>
+		</header>
+		<div class="post__content clearfix">
+			<p>In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
+object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
+when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.</p>
+
+<p>In this article, we will build two simple applications, one which generates the object, the keys (public &amp; private) and signs the object with the private key.
+Other application which verifies the signed object in other end over the network or another application in the same machine. Both these apps can run independently in different machines.
+For signing the object we will be using Public-Key cryptography. This is one of the most widely used standards to sign data along with DSA &amp; SHA1PRNG
+(cryptographically strong pseudo-random number generator (PRNG)).
+Public-Key cryptography is a asymmetric key algorithm, where the key used to encrypt a message is not the same as the key used to decrypt it.</p>
+
+<p>This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
+and in the second part, we will verify it.</p>
+
+<p><img src="/media/images/00005/signing-java-objects-class-layout.png#floatcenter" alt="" /></p>
+
+<h5 id="sign-the-java-object">Sign the Java Object</h5>
+
+<p>First of all we need a class which will generate a public and private key.
+We will create a class named SecurityUtil which will generate those based on DSA (we can use RSA or any other algorithm as long as its available)
+and we will generate a cryptographically strong pseudo-random number generator (PRNG) which can be clubbed along with DSA (SHA1PRNG).
+The strength of the key will be 1024.</p>
+
+<pre><code class="java">protected KeyPair generateKey () throws Exception {
+    KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("DSA");
+    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+    keyPairGen.initialize(1024,secureRandom);
+    KeyPair keyPair = keyPairGen.generateKeyPair();
+    return keyPair;
+}
+</code></pre>
+
+<p>Next we will create a class named EmployeeValueObject which is nothing but a POJO with a HashMap getter/setter.
+This will be the object which we will be transferring over the network/application. Since we serialize the object before transferring, this class should implement Serializable.</p>
+
+<pre><code class="java">public class EmployeeValueObject implements Serializable {
+    HashMap employeeSalary = new HashMap();
+    public void setSalary (HashMap employeeSalary){
+        this.employeeSalary = employeeSalary;
+    }
+
+    public HashMap getSalary () {
+        return employeeSalary;
+    }
+}
+</code></pre>
+
+<p>Now we have all the supporting classes which we need and let’s start building the main application.
+Let’s call this class EmployeeDetails and this will create an object for the POJO which we created in our previous step and populate with some data.
+In addition to that, we will sign the POJO object and then serialize to a file.
+In this example we will be also serializing the public key to transfer to the other end.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
+
+<p>Let’s create the POJO and populate with some data in the HashMap.</p>
+
+<pre><code class="java">EmployeeValueObject employeeVO = new EmployeeValueObject();
+employeeVO.setSalary(populateData());
+
+private static HashMap populateData (){
+    HashMap employeeSalary = new HashMap ();
+    employeeSalary.put("3", "Johns, Galvin D. --> $18,000");
+    employeeSalary.put("4", "Weber, Murphy I. --> $5,000");
+
+    return employeeSalary;
+}
+</code></pre>
+
+<p>Now let’s generate the public and private keys from SecutityUtil and sign the POJO which we created in the above step.</p>
+
+<pre><code class="java">KeyPair keyPair = new SecurityUtil().generateKey();
+PrivateKey privateKey = keyPair.getPrivate();
+PublicKey publicKey = keyPair.getPublic();
+
+Signature digitalSignature = Signature.getInstance(privateKey.getAlgorithm());
+SignedObject digitalSignedObj =
+    new SignedObject(employeeVO, privateKey, digitalSignature);
+</code></pre>
+
+<p>Now digitalSignedObj is a digitally signed data with the private key which we generated. Now let’s serialize this object for the secure transfer.</p>
+
+<pre><code class="java">ileOutputStream serializedFileOutput = new FileOutputStream("employee.ser");
+ObjectOutputStream serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(digitalSignedObj);
+serializedObjOutput.close();
+serializedFileOutput.close();
+</code></pre>
+
+<p>We will also serialize the public key so that for this example we can send both of them to another machine to verify.
+Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
+
+<pre><code class="java">serializedFileOutput = new FileOutputStream("publickey.ser");
+serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
+serializedObjOutput.writeObject(publicKey);
+serializedObjOutput.close();
+serializedFileOutput.close();
+</code></pre>
+
+<p>This will complete the creation of application one. When you run this application, it will create two new files in the same directory.
+employee.ser – which is the signed and serialized POJO (Salary details) &amp; publickey.ser – public key to verify the POJO.
+Now using the appropriate protocol send these files to the other application (remote or local) and let’s start building the verification part.</p>
+
+<h5 id="verification-amp-de-serializing-the-java-object">Verification &amp; De-Serializing the Java Object</h5>
+
+<p>As a start we have the files employee.ser &amp; publickey.ser. Let’s start building up the class to verify and de-serialize these files.
+Let’s name this class DecryptEmployee. The following code should de-serialize the objects.</p>
+
+<pre><code class="java">FileInputStream serializedPublicKeyIn = new FileInputStream("publicKey.ser");
+ObjectInputStream serializedPublicKey = new ObjectInputStream(serializedPublicKeyIn);
+PublicKey publicKey = (PublicKey) serializedPublicKey.readObject();
+
+FileInputStream serializedEmployeeIn = new FileInputStream("employee.ser");
+ObjectInputStream serializedEmployee = new ObjectInputStream(serializedEmployeeIn);
+SignedObject digitalSignedObj = (SignedObject) serializedEmployee.readObject();
+</code></pre>
+
+<p>Since the public key was not signed, publicKey variable will be readable.
+But the employee POJO was signed, so we are reading the object as a SignedObject. Let’s move forward and verify this.</p>
+
+<pre><code class="java">Signature digitalSignature = Signature.getInstance(publicKey.getAlgorithm());
+boolean decryptFlag = digitalSignedObj.verify(publicKey, digitalSignature);
+</code></pre>
+
+<p>The decryptFlag contains the status of the verification.
+If the public key is incorrect or if the object was tampered, then this will return false and we won’t be able to verify the object.
+If its true then everything looks good and we can successfully verify the POJO and print the values from HashMap.</p>
+
+<pre><code class="java">if(decryptFlag) {
+    EmployeeValueObject employeeVO = (EmployeeValueObject) digitalSignedObj.getObject();
+    HashMap employeeSalary = (HashMap) employeeVO.getSalary();
+    Collection collHashMap = employeeSalary.values();
+    Iterator collectionIterator = collHashMap.iterator();
+    while (collectionIterator.hasNext()) {
+        System.out.println(collectionIterator.next());
+    }
+} else {
+    System.out.println ("Decryption Failed. Please check the Keys.");
+}
+</code></pre>
+
+<p>If you run this application, we will get an output similar to below.</p>
+
+<p><img src="/media/images/00005/signing-java-objects-output.png#floatcenter" alt="" /></p>
+
+<p>This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.</p>
+
+<p>UPDATE: SignedObject signs the object, but it doesn&rsquo;t encrypt it. So if you need encryption, you can use the Cipher class in Java.</p>
+
+<p></p>
+		</div>
+		<svg class="icon icon-time" height="14" viewBox="0 0 16 16" width="14" xmlns="http://www.w3.org/2000/svg"><path d="m8-.0000003c-4.4 0-8 3.6-8 8 0 4.4000003 3.6 8.0000003 8 8.0000003 4.4 0 8-3.6 8-8.0000003 0-4.4-3.6-8-8-8zm0 14.4000003c-3.52 0-6.4-2.88-6.4-6.4000003 0-3.52 2.88-6.4 6.4-6.4 3.52 0 6.4 2.88 6.4 6.4 0 3.5200003-2.88 6.4000003-6.4 6.4000003zm.4-10.4000003h-1.2v4.8l4.16 2.5600003.64-1.04-3.6-2.1600003z"/></svg>
+		<time class="post__meta-date" datetime="2009-10-13 22:45:00 &#43;0000 UTC">Last Updated:&nbsp;&nbsp;October, 2009</time>
+		<br><br>
+		
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/sign/" rel="tag">Sign</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/encryption/" rel="tag">Encryption</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/rsa/" rel="tag">RSA</a></li>
+	</ul>
+</div>
+
+	</article>
+	
+<div class="authorbox clearfix">
+	<figure class="authorbox__avatar">
+		<img alt="Venish Joe Clarence avatar" src="/images/venishjoe_net_logo.png" class="avatar" height="90" width="90">
+	</figure>
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Venish Joe Clarence</span>
+	</div>
+	<div class="authorbox__description">
+		I have the ability to arrange 1&#39;s and 0&#39;s in such an order that an x86 processor can actually interpret and execute those commands. I make the world a better place by writing mindless back-end programs that no-one will ever see nor even know that it&#39;s there. But I know; and that&#39;s all that matters. -Alucard
+	</div>
+</div>
+	
+<nav class="post-nav row clearfix" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<div class="post-nav__item post-nav__item--prev col-1-2">
+		<a class="post-nav__link" href="/post/recover-from-out-of-memory-errors-in-java/" rel="prev"><span class="post-nav__caption">«Previous</span><p class="post-nav__post-title">Recover from Out of Memory Errors in Java</p></a>
+	</div>
+	<div class="post-nav__item post-nav__item--next col-1-2">
+		<a class="post-nav__link" href="/post/monitor-a-directory-for-changes-using-java/" rel="next"><span class="post-nav__caption">Next»</span><p class="post-nav__post-title">Monitor a Directory for Changes using Java</p></a>
+	</div>
+</nav>
+
+	
+</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Proxy Server in Java - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="Simple Proxy Server in Java" />
+<meta property="og:description" content="In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
+From Wikipedia, &ldquo;a proxy server is a server (a computer system or an application program)
+that acts as an intermediary for requests from clients seeking resources from other servers.&ldquo;The proxy server generally has some resources,
+or has access to some resources and when it receives request from a client, it access the appropriate resource and sends back the response.
+
+So it serves two purposes, giving access to a resource which the client do not have access and it hides the real client who needs the resource.
+The second part is used for the anonymous browsing in Internet using anonymous proxy servers.
+Although this may not be as “anonymous” as it sounds because the proxy server which you connect to can maintain logs about the clients who are connecting to the server,
+and also the bigger risk being the data theft. Since the “anonymous” proxy server has access to all the request you send,
+there is risk of that data being exposed unless there is some kind of encryption in place between the client and the proxy server.
+
+If you are in a network, and the machine which you are using don’t have access to Internet but another machine in the same subnet has access to Internet, then you can run this
+proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
+where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.
+
+
+
+The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
+We will start by declaring some constants.
+
+int proxyServerPortNumber = 7879;
+int webServerPortNumber = 80;
+String webServerIpAddress = &#34;192.168.1.1&#34;;
+final int PROXY_SERVER_TIME_OUT = 5000;
+final int SOCKET_TIME_OUT = 2000;
+
+
+proxyServerPortNumber defines the port where the proxy server will be listening. You can use any port number which is not used by other process / standard port.
+
+webServerIpAddress and webServerPortNumber defines the IP/port where the server can access the resources. Since we are designing this to access websites over http,
+the port is defined as 80 and the IP should be a machine which has Internet access (can be localhost too)
+
+PROXY_SERVER_TIME_OUT and SOCKET_TIME_OUT are standard parameters defined for Server and network socket timeout. You can adjust this based on your needs.
+
+Now we need to start the Java class to bind to the port number defined and to run in a infinite loop or as a daemon thread, so that it keeps on listening for requests.
+In this example, we will be using the infinite loop.
+
+try {
+    serverSocket = new ServerSocket(proxyServerPortNumber);
+} catch(Exception exc) {
+        System.exit(0);
+}
+
+
+Now the process will be listening in the port 7879 for requests from clients. Now, let’s open an infinte loop and make a connection to the resource, in our case the web server.
+
+socketProxy = new Socket(InetAddress.getByName(webServerIpAddress),webServerPortNumber);
+socketProxy.setSoTimeout(PROXY_SERVER_TIME_OUT);
+socket = serverSocket.accept();
+socket.setSoTimeout(SOCKET_TIME_OUT);
+inputStream = socket.getInputStream();
+
+
+The request from the client will be received by Input Stream, so once we are connected, we will be sending this Input Stream which is nothing but a normal HTTP REQ object
+to the server which has the resource or as in our case the machine connected to Internet. The server will respond with the response which will be a HTTP RES over the
+Java Output Stream. We will be forwarding this output stream to the client which will be rendered in the application which the client requested in.
+That is if the request was sent through command line, the entire HTML will be printed, if its a browser the page will be rendered.
+
+try {
+    while( (intCounter = in.read()) != -1) {
+        if(intCounter == -1) break;
+        if(!bREQ)
+            bREQ = true;
+        pOutputStream.write(intCounter);
+        if(byteCheckFl &gt; 0) {
+            break;
+        }
+        if(intCounter == 13 &amp;&amp; intPrevCounter == 10)
+            byteCheckFl&#43;&#43;;
+        intPrevCounter = intCounter;
+    }
+} catch(Exception e) {
+    if(!bREQ) {
+        continue;
+    }
+}
+
+pOutputStream.flush();
+pIutputStream = socketProxy.getInputStream();
+outputStream = socket.getOutputStream();
+try {
+    while( (intCounter = pIutputStream.read()) != -1) {
+        outputStream.write(intCounter);
+    }
+} catch(Exception e) {
+}
+outputStream.flush();
+
+
+Make sure to close all the opened sockets and connections once the response is sent. Since this whole code is running in an infinite loop,
+the server will keep on waiting for the requests and sending the responses back. This is a crude implementation of the concept and there is
+room for a lot more improvements (like supporting SSL), but this should serve as a foundation to make the proxy a robust one.
+
+We can easily make this Java class as a Win32 service, so that it will always run in background and starts along with the OS.
+That will need some work with JNI. I will explain that in a later post.
+
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/simple-proxy-server-in-java/" />
+
+
+
+<meta property="article:published_time" content="2009-09-27T00:55:00&#43;00:00"/>
+<meta property="article:modified_time" content="2009-09-27T00:55:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+<div class="main-content content" role="main" itemprop="mainContentOfPage">
+	<article class="post">
+		<header class="post__header clearfix">
+			<h1 class="post__title">Simple Proxy Server in Java</h1>
+			<p class="post__meta meta">
+				
+				<span class="post__meta-categories meta-categories">
+					<svg class="icon icon-category" height="16" viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="m7 2l1 2h8v11h-16v-13z"/></svg>
+					<a class="meta-categories__link" href="/categories/programming" rel="category">Programming</a>, <a class="meta-categories__link" href="/categories/network" rel="category">Network</a></span>
+			</p>
+		</header>
+		<div class="post__content clearfix">
+			<p>In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
+From <a href="http://en.wikipedia.org/wiki/Proxy_server">Wikipedia</a>, &ldquo;a proxy server is a server (a computer system or an application program)
+that acts as an intermediary for requests from clients seeking resources from other servers.&ldquo;The proxy server generally has some resources,
+or has access to some resources and when it receives request from a client, it access the appropriate resource and sends back the response.</p>
+
+<p>So it serves two purposes, giving access to a resource which the client do not have access and it hides the real client who needs the resource.
+The second part is used for the anonymous browsing in Internet using anonymous proxy servers.
+Although this may not be as “anonymous” as it sounds because the proxy server which you connect to can maintain logs about the clients who are connecting to the server,
+and also the bigger risk being the data theft. Since the “anonymous” proxy server has access to all the request you send,
+there is risk of that data being exposed unless there is some kind of encryption in place between the client and the proxy server.</p>
+
+<p>If you are in a network, and the machine which you are using don’t have access to Internet but another machine in the same subnet has access to Internet, then you can run this
+proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
+where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.</p>
+
+<p><img src="/media/images/00003/simple-proxy-server-architecture.png#floatcenter" alt="" /></p>
+
+<p>The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
+We will start by declaring some constants.</p>
+
+<pre><code class="java">int proxyServerPortNumber = 7879;
+int webServerPortNumber = 80;
+String webServerIpAddress = "192.168.1.1";
+final int PROXY_SERVER_TIME_OUT = 5000;
+final int SOCKET_TIME_OUT = 2000;
+</code></pre>
+
+<p>proxyServerPortNumber defines the port where the proxy server will be listening. You can use any port number which is not used by other process / standard port.</p>
+
+<p>webServerIpAddress and webServerPortNumber defines the IP/port where the server can access the resources. Since we are designing this to access websites over http,
+the port is defined as 80 and the IP should be a machine which has Internet access (can be localhost too)</p>
+
+<p>PROXY_SERVER_TIME_OUT and SOCKET_TIME_OUT are standard parameters defined for Server and network socket timeout. You can adjust this based on your needs.</p>
+
+<p>Now we need to start the Java class to bind to the port number defined and to run in a infinite loop or as a daemon thread, so that it keeps on listening for requests.
+In this example, we will be using the infinite loop.</p>
+
+<pre><code class="java">try {
+    serverSocket = new ServerSocket(proxyServerPortNumber);
+} catch(Exception exc) {
+        System.exit(0);
+}
+</code></pre>
+
+<p>Now the process will be listening in the port 7879 for requests from clients. Now, let’s open an infinte loop and make a connection to the resource, in our case the web server.</p>
+
+<pre><code class="java">socketProxy = new Socket(InetAddress.getByName(webServerIpAddress),webServerPortNumber);
+socketProxy.setSoTimeout(PROXY_SERVER_TIME_OUT);
+socket = serverSocket.accept();
+socket.setSoTimeout(SOCKET_TIME_OUT);
+inputStream = socket.getInputStream();
+</code></pre>
+
+<p>The request from the client will be received by Input Stream, so once we are connected, we will be sending this Input Stream which is nothing but a normal HTTP REQ object
+to the server which has the resource or as in our case the machine connected to Internet. The server will respond with the response which will be a HTTP RES over the
+Java Output Stream. We will be forwarding this output stream to the client which will be rendered in the application which the client requested in.
+That is if the request was sent through command line, the entire HTML will be printed, if its a browser the page will be rendered.</p>
+
+<pre><code class="java">try {
+    while( (intCounter = in.read()) != -1) {
+        if(intCounter == -1) break;
+        if(!bREQ)
+            bREQ = true;
+        pOutputStream.write(intCounter);
+        if(byteCheckFl &gt; 0) {
+            break;
+        }
+        if(intCounter == 13 &amp;&amp; intPrevCounter == 10)
+            byteCheckFl++;
+        intPrevCounter = intCounter;
+    }
+} catch(Exception e) {
+    if(!bREQ) {
+        continue;
+    }
+}
+
+pOutputStream.flush();
+pIutputStream = socketProxy.getInputStream();
+outputStream = socket.getOutputStream();
+try {
+    while( (intCounter = pIutputStream.read()) != -1) {
+        outputStream.write(intCounter);
+    }
+} catch(Exception e) {
+}
+outputStream.flush();
+</code></pre>
+
+<p>Make sure to close all the opened sockets and connections once the response is sent. Since this whole code is running in an infinite loop,
+the server will keep on waiting for the requests and sending the responses back. This is a crude implementation of the concept and there is
+room for a lot more improvements (like supporting SSL), but this should serve as a foundation to make the proxy a robust one.</p>
+
+<p>We can easily make this Java class as a Win32 service, so that it will always run in background and starts along with the OS.
+That will need some work with JNI. I will explain that in a later post.</p>
+
+<p></p>
+		</div>
+		<svg class="icon icon-time" height="14" viewBox="0 0 16 16" width="14" xmlns="http://www.w3.org/2000/svg"><path d="m8-.0000003c-4.4 0-8 3.6-8 8 0 4.4000003 3.6 8.0000003 8 8.0000003 4.4 0 8-3.6 8-8.0000003 0-4.4-3.6-8-8-8zm0 14.4000003c-3.52 0-6.4-2.88-6.4-6.4000003 0-3.52 2.88-6.4 6.4-6.4 3.52 0 6.4 2.88 6.4 6.4 0 3.5200003-2.88 6.4000003-6.4 6.4000003zm.4-10.4000003h-1.2v4.8l4.16 2.5600003.64-1.04-3.6-2.1600003z"/></svg>
+		<time class="post__meta-date" datetime="2009-09-27 00:55:00 &#43;0000 UTC">Last Updated:&nbsp;&nbsp;September, 2009</time>
+		<br><br>
+		
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/proxy/" rel="tag">Proxy</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/server/" rel="tag">Server</a></li>
+	</ul>
+</div>
+
+	</article>
+	
+<div class="authorbox clearfix">
+	<figure class="authorbox__avatar">
+		<img alt="Venish Joe Clarence avatar" src="/images/venishjoe_net_logo.png" class="avatar" height="90" width="90">
+	</figure>
+	<div class="authorbox__header">
+		<span class="authorbox__name">About Venish Joe Clarence</span>
+	</div>
+	<div class="authorbox__description">
+		I have the ability to arrange 1&#39;s and 0&#39;s in such an order that an x86 processor can actually interpret and execute those commands. I make the world a better place by writing mindless back-end programs that no-one will ever see nor even know that it&#39;s there. But I know; and that&#39;s all that matters. -Alucard
+	</div>
+</div>
+	
+<nav class="post-nav row clearfix" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<div class="post-nav__item post-nav__item--prev col-1-2">
+		<a class="post-nav__link" href="/post/recover-database-passwords-from-weblogic-server/" rel="prev"><span class="post-nav__caption">«Previous</span><p class="post-nav__post-title">Recover Database Passwords from Weblogic Server</p></a>
+	</div>
+	<div class="post-nav__item post-nav__item--next col-1-2">
+		<a class="post-nav__link" href="/post/recover-from-out-of-memory-errors-in-java/" rel="next"><span class="post-nav__caption">Next»</span><p class="post-nav__post-title">Recover from Out of Memory Errors in Java</p></a>
+	</div>
+</nav>
+
+	
+</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/bytecode" title="bytecode">bytecode (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+</body>
+</html>
