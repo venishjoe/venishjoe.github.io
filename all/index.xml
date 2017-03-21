@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>List of all articles on VENISHJOE.NET</title>
-    <link>/all/index.xml</link>
+    <link>http://venishjoe.net/all/index.xml</link>
     <description>Recent content in List of all articles on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
@@ -10,7 +10,7 @@
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
     <lastBuildDate>Mon, 31 Aug 2009 23:54:00 +0000</lastBuildDate>
-    <atom:link href="/all/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/all/index.xml" rel="self" type="application/rss+xml" />
     
   </channel>
 </rss>

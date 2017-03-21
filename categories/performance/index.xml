@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Performance on VENISHJOE.NET</title>
-    <link>/categories/performance/index.xml</link>
+    <link>http://venishjoe.net/categories/performance/index.xml</link>
     <description>Recent content in Performance on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/categories/performance/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/categories/performance/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Java String Concatenation and Performance</title>
-      <link>/post/java-string-concatenation-and-performance/</link>
+      <link>http://venishjoe.net/post/java-string-concatenation-and-performance/</link>
       <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/java-string-concatenation-and-performance/</guid>
+      <guid>http://venishjoe.net/post/java-string-concatenation-and-performance/</guid>
       <description>&lt;p&gt;The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
 This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
 But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
@@ -89,7 +89,7 @@ for (int outerIndex=0;outerIndex&amp;lt;=OUTER_ITERATION;outerIndex++) {
 
 &lt;p&gt;The output from the 21 iterations of the program is plotted below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
 We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.

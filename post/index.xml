@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on VENISHJOE.NET</title>
-    <link>/post/index.xml</link>
+    <link>http://venishjoe.net/post/index.xml</link>
     <description>Recent content in Posts on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
@@ -10,14 +10,14 @@
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
     <lastBuildDate>Sun, 18 Apr 2010 21:41:00 +0000</lastBuildDate>
-    <atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Dynamic Columns in JSP Model with Struts Framework</title>
-      <link>/post/dynamic-columns-in-jsp-model-with-struts/</link>
+      <link>http://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</link>
       <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/dynamic-columns-in-jsp-model-with-struts/</guid>
+      <guid>http://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</guid>
       <description>&lt;p&gt;While developing web applications, we will come across a lot of scenarios where we should use dynamic columns depending on the entitlement of the user or
 from the result set depending on the data itself. Dynamic columns in web applications give control to the user on what he wants to see
 (specially when we have a huge amount of data to work with). For applications with sensitive data,
@@ -27,7 +27,7 @@ this can be even extended to act as a security layer where the access to specifi
 
 &lt;h5 id=&#34;high-level-architecture&#34;&gt;High Level Architecture&lt;/h5&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;In a nut shell, this design uses the Application Context of the container to maintain the values pertaining to a particular user,
 if the requirement demands not to maintain the preference after a user session is terminated, then it can be achieved by destroying the object stored in the context.&lt;/p&gt;
@@ -175,10 +175,10 @@ Just before the bean write tag, have a logic equal tag to check for specific typ
     
     <item>
       <title>Java String Concatenation and Performance</title>
-      <link>/post/java-string-concatenation-and-performance/</link>
+      <link>http://venishjoe.net/post/java-string-concatenation-and-performance/</link>
       <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/java-string-concatenation-and-performance/</guid>
+      <guid>http://venishjoe.net/post/java-string-concatenation-and-performance/</guid>
       <description>&lt;p&gt;The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
 This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
 But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
@@ -251,7 +251,7 @@ for (int outerIndex=0;outerIndex&amp;lt;=OUTER_ITERATION;outerIndex++) {
 
 &lt;p&gt;The output from the 21 iterations of the program is plotted below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
 We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.
@@ -285,11 +285,11 @@ To have the best performance, the clear choice is StringBuilder as long as you d
     
     <item>
       <title>Recursive File Tree Traversing in Java using NIO.2</title>
-      <link>/post/recursive-file-tree-traversing-in-java-using-nio/</link>
+      <link>http://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/</link>
       <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/recursive-file-tree-traversing-in-java-using-nio/</guid>
-      <description>&lt;p&gt;In my &lt;a href=&#34;/post/monitor-a-directory-for-changes-using-java/&#34;&gt;previous article about NIO.2&lt;/a&gt;,
+      <guid>http://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/</guid>
+      <description>&lt;p&gt;In my &lt;a href=&#34;http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/&#34;&gt;previous article about NIO.2&lt;/a&gt;,
 we have seen how to implement a service which monitors a directory recursively for any changes.
 In this article we will look at another improvement in JDK7 (NIO.2) called FileWatcher.
 This will allow us to implement a search or index. For example, we can find all the $some_pattern$ files in a given directory recursively and (or)
@@ -300,7 +300,7 @@ In a nutshell FileWatcher will get us a list of files from a file system based o
 We have two methods before the traversal starts at the directory level &amp;amp; file level, and one method after the traversal is complete,
 which can be used for clean up or post processing. The important points from the interface is given in the below diagram.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;While I think FileVistor is the best way to handle this, JDK7 NIO.2 has given another option to achieve the same, a class named SimpleFileVistor (which implements FileVisitor).
 It should be self explanatory, a simplified version of FileVisitor.
@@ -359,7 +359,7 @@ public FileVisitResult preVisitDirectory(Path directoryPath) {
 
 &lt;p&gt;Once this is completed, we can use the postVisitDirectory() to perform additional tasks or any cleanup if needed. A sample output from my machine is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;The complete source code is given below. Please note that you need JDK7 to run this code.
 Source is also available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2_file-visitor&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
@@ -394,10 +394,10 @@ Source is also available in &lt;a href=&#34;https://github.com/venishjoe/blog-co
     
     <item>
       <title>Dynamically Load Compiled Java Class as a Byte Array and Execute</title>
-      <link>/post/dynamically-load-compiled-java-class/</link>
+      <link>http://venishjoe.net/post/dynamically-load-compiled-java-class/</link>
       <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/dynamically-load-compiled-java-class/</guid>
+      <guid>http://venishjoe.net/post/dynamically-load-compiled-java-class/</guid>
       <description>&lt;p&gt;As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
 This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
 I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
@@ -462,7 +462,7 @@ printStream.print(bytesStringBuffer.length()==0 ? &#34;&#34; :
 
 &lt;p&gt;Now let’s run this file and generate the output. A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
 custom class loader which will “reconstruct” the class from these bytes and run it,
@@ -516,7 +516,7 @@ regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
 If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
 Sample output from my machine below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 
@@ -525,10 +525,10 @@ Sample output from my machine below.&lt;/p&gt;
     
     <item>
       <title>Monitor a Directory for Changes using Java</title>
-      <link>/post/monitor-a-directory-for-changes-using-java/</link>
+      <link>http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/</link>
       <pubDate>Sun, 18 Oct 2009 02:23:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/monitor-a-directory-for-changes-using-java/</guid>
+      <guid>http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/</guid>
       <description>&lt;p&gt;Many applications which we use on a day to day basis like a music organizer, file editors monitor the directory for any changes in the files/directories and
 take appropriate action in the application if there are any changes detected on the fly.
 Since Java do not have direct access to the system level calls (unless we use JNI, which will make the code platform specific)
@@ -594,7 +594,7 @@ Once the program starts running, start creating some directories/files or modify
 the program will start triggering the event and you should be able to watch the modifications in the console.
 A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00006/monitor-a-directory-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00006/monitor-a-directory-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2-watch-folder&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 
@@ -628,10 +628,10 @@ public static void main (String args[]) throws Exception {
     
     <item>
       <title>Signing Java Objects for Secure Transfer</title>
-      <link>/post/signing-java-objects-for-secure-transfer/</link>
+      <link>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</link>
       <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/signing-java-objects-for-secure-transfer/</guid>
+      <guid>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</guid>
       <description>&lt;p&gt;In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
 object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
 when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.&lt;/p&gt;
@@ -645,7 +645,7 @@ Public-Key cryptography is a asymmetric key algorithm, where the key used to enc
 &lt;p&gt;This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
 and in the second part, we will verify it.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;sign-the-java-object&#34;&gt;Sign the Java Object&lt;/h5&gt;
 
@@ -772,7 +772,7 @@ If its true then everything looks good and we can successfully verify the POJO a
 
 &lt;p&gt;If you run this application, we will get an output similar to below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.&lt;/p&gt;
 
@@ -783,10 +783,10 @@ If its true then everything looks good and we can successfully verify the POJO a
     
     <item>
       <title>Recover from Out of Memory Errors in Java</title>
-      <link>/post/recover-from-out-of-memory-errors-in-java/</link>
+      <link>http://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</link>
       <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/recover-from-out-of-memory-errors-in-java/</guid>
+      <guid>http://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</guid>
       <description>&lt;p&gt;In Java, as any other programming language there is a restriction of amount of memory any program can use.
 In languages like C the memory is limited to amount of RAM the operating system allocates to the applications or the user space.
 Since Java applications are technically running in the Java Virtual Machine (JVM), the applications have memory allocated by the JVM.
@@ -929,10 +929,10 @@ if(pointer == NULL) {
     
     <item>
       <title>Simple Proxy Server in Java</title>
-      <link>/post/simple-proxy-server-in-java/</link>
+      <link>http://venishjoe.net/post/simple-proxy-server-in-java/</link>
       <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/simple-proxy-server-in-java/</guid>
+      <guid>http://venishjoe.net/post/simple-proxy-server-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
 From &lt;a href=&#34;http://en.wikipedia.org/wiki/Proxy_server&#34;&gt;Wikipedia&lt;/a&gt;, &amp;ldquo;a proxy server is a server (a computer system or an application program)
 that acts as an intermediary for requests from clients seeking resources from other servers.&amp;ldquo;The proxy server generally has some resources,
@@ -948,7 +948,7 @@ there is risk of that data being exposed unless there is some kind of encryption
 proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
 where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
 We will start by declaring some constants.&lt;/p&gt;
@@ -1034,10 +1034,10 @@ That will need some work with JNI. I will explain that in a later post.&lt;/p&gt
     
     <item>
       <title>Recover Database Passwords from Weblogic Server</title>
-      <link>/post/recover-database-passwords-from-weblogic-server/</link>
+      <link>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
       <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/recover-database-passwords-from-weblogic-server/</guid>
+      <guid>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
       <description>&lt;p&gt;In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
 If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
 The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
@@ -1102,7 +1102,7 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
 
 &lt;p&gt;Sample output is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This was tested with Weblogic Server 8.1 and JDK 1.6.&lt;/p&gt;
 
@@ -1111,10 +1111,10 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
     
     <item>
       <title>Serial Key Generation and Validation in Java</title>
-      <link>/post/serial-key-generation-and-validation-in-java/</link>
+      <link>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</link>
       <pubDate>Mon, 31 Aug 2009 23:54:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/serial-key-generation-and-validation-in-java/</guid>
+      <guid>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.&lt;/p&gt;
 
 &lt;p&gt;&lt;b&gt;&lt;font color=&#34;red&#34;&gt;WARNING:&lt;/font&gt;&lt;/b&gt; Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.&lt;/p&gt;
@@ -1133,7 +1133,7 @@ This will generate a total of 104 digits, since we need only 18 of them, we can 
 
 &lt;p&gt;The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;generating-the-serial&#34;&gt;Generating the Serial&lt;/h5&gt;
 
@@ -1214,7 +1214,7 @@ else
 
 &lt;p&gt;Sample output from this program is demonstrated below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>

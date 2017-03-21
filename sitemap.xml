@@ -2,383 +2,383 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>/post/dynamic-columns-in-jsp-model-with-struts/</loc>
+    <loc>http://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/java-string-concatenation-and-performance/</loc>
+    <loc>http://venishjoe.net/post/java-string-concatenation-and-performance/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/recursive-file-tree-traversing-in-java-using-nio/</loc>
+    <loc>http://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/</loc>
     <lastmod>2009-10-26T11:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/dynamically-load-compiled-java-class/</loc>
+    <loc>http://venishjoe.net/post/dynamically-load-compiled-java-class/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/monitor-a-directory-for-changes-using-java/</loc>
+    <loc>http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/</loc>
     <lastmod>2009-10-18T02:23:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/signing-java-objects-for-secure-transfer/</loc>
+    <loc>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</loc>
     <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/recover-from-out-of-memory-errors-in-java/</loc>
+    <loc>http://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/simple-proxy-server-in-java/</loc>
+    <loc>http://venishjoe.net/post/simple-proxy-server-in-java/</loc>
     <lastmod>2009-09-27T00:55:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/recover-database-passwords-from-weblogic-server/</loc>
+    <loc>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/about/</loc>
+    <loc>http://venishjoe.net/about/</loc>
     <lastmod>2009-08-31T23:54:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/all/</loc>
+    <loc>http://venishjoe.net/all/</loc>
     <lastmod>2009-08-31T23:54:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/post/serial-key-generation-and-validation-in-java/</loc>
+    <loc>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</loc>
     <lastmod>2009-08-31T23:54:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>/tags/3des/</loc>
+    <loc>http://venishjoe.net/tags/3des/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/bytecode/</loc>
+    <loc>http://venishjoe.net/tags/bytecode/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/</loc>
+    <loc>http://venishjoe.net/categories/</loc>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/classloader/</loc>
+    <loc>http://venishjoe.net/tags/classloader/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/core-java/</loc>
+    <loc>http://venishjoe.net/tags/core-java/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/database/</loc>
+    <loc>http://venishjoe.net/tags/database/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/encryption/</loc>
+    <loc>http://venishjoe.net/tags/encryption/</loc>
     <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/errors/</loc>
+    <loc>http://venishjoe.net/tags/errors/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/exceptions/</loc>
+    <loc>http://venishjoe.net/tags/exceptions/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/geronimo/</loc>
+    <loc>http://venishjoe.net/tags/geronimo/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/j2ee/</loc>
+    <loc>http://venishjoe.net/tags/j2ee/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/j2ee/</loc>
+    <loc>http://venishjoe.net/categories/j2ee/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/java/</loc>
+    <loc>http://venishjoe.net/tags/java/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/java-ea/</loc>
+    <loc>http://venishjoe.net/tags/java-ea/</loc>
     <lastmod>2009-10-26T11:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/jdk7/</loc>
+    <loc>http://venishjoe.net/tags/jdk7/</loc>
     <lastmod>2009-10-26T11:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/jsp/</loc>
+    <loc>http://venishjoe.net/tags/jsp/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/jsr/</loc>
+    <loc>http://venishjoe.net/tags/jsr/</loc>
     <lastmod>2009-10-26T11:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/jvm/</loc>
+    <loc>http://venishjoe.net/tags/jvm/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/memory/</loc>
+    <loc>http://venishjoe.net/tags/memory/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/network/</loc>
+    <loc>http://venishjoe.net/tags/network/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/network/</loc>
+    <loc>http://venishjoe.net/categories/network/</loc>
     <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/nio/index.2/</loc>
+    <loc>http://venishjoe.net/tags/nio/index.2/</loc>
     <lastmod>2009-10-26T11:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/outofmemory/</loc>
+    <loc>http://venishjoe.net/tags/outofmemory/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/password-recovery/</loc>
+    <loc>http://venishjoe.net/tags/password-recovery/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/performance/</loc>
+    <loc>http://venishjoe.net/tags/performance/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/performance/</loc>
+    <loc>http://venishjoe.net/categories/performance/</loc>
     <lastmod>2009-11-08T18:01:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/post/</loc>
+    <loc>http://venishjoe.net/post/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/programming/</loc>
+    <loc>http://venishjoe.net/categories/programming/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/proxy/</loc>
+    <loc>http://venishjoe.net/tags/proxy/</loc>
     <lastmod>2009-09-27T00:55:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/reverse-engineering/</loc>
+    <loc>http://venishjoe.net/tags/reverse-engineering/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/reverse-engineering/</loc>
+    <loc>http://venishjoe.net/categories/reverse-engineering/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/rsa/</loc>
+    <loc>http://venishjoe.net/tags/rsa/</loc>
     <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/security/</loc>
+    <loc>http://venishjoe.net/tags/security/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/security/</loc>
+    <loc>http://venishjoe.net/categories/security/</loc>
     <lastmod>2009-10-21T21:20:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/serial-key/</loc>
+    <loc>http://venishjoe.net/tags/serial-key/</loc>
     <lastmod>2009-08-31T23:54:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/server/</loc>
+    <loc>http://venishjoe.net/tags/server/</loc>
     <lastmod>2009-09-27T00:55:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/sign/</loc>
+    <loc>http://venishjoe.net/tags/sign/</loc>
     <lastmod>2009-10-13T22:45:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/struts/</loc>
+    <loc>http://venishjoe.net/tags/struts/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/system/</loc>
+    <loc>http://venishjoe.net/tags/system/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/categories/system/</loc>
+    <loc>http://venishjoe.net/categories/system/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>http://venishjoe.net/tags/</loc>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/</loc>
+    <loc>http://venishjoe.net/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/tags/weblogic/</loc>
+    <loc>http://venishjoe.net/tags/weblogic/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>

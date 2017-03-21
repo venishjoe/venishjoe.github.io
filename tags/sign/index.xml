@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Sign on VENISHJOE.NET</title>
-    <link>/tags/sign/index.xml</link>
+    <link>http://venishjoe.net/tags/sign/index.xml</link>
     <description>Recent content in Sign on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/tags/sign/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/tags/sign/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Signing Java Objects for Secure Transfer</title>
-      <link>/post/signing-java-objects-for-secure-transfer/</link>
+      <link>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</link>
       <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/signing-java-objects-for-secure-transfer/</guid>
+      <guid>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</guid>
       <description>&lt;p&gt;In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
 object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
 when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.&lt;/p&gt;
@@ -30,7 +30,7 @@ Public-Key cryptography is a asymmetric key algorithm, where the key used to enc
 &lt;p&gt;This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
 and in the second part, we will verify it.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;sign-the-java-object&#34;&gt;Sign the Java Object&lt;/h5&gt;
 
@@ -157,7 +157,7 @@ If its true then everything looks good and we can successfully verify the POJO a
 
 &lt;p&gt;If you run this application, we will get an output similar to below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.&lt;/p&gt;
 

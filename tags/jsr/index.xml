@@ -2,22 +2,22 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jsr on VENISHJOE.NET</title>
-    <link>/tags/jsr/index.xml</link>
+    <link>http://venishjoe.net/tags/jsr/index.xml</link>
     <description>Recent content in Jsr on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/tags/jsr/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/tags/jsr/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Recursive File Tree Traversing in Java using NIO.2</title>
-      <link>/post/recursive-file-tree-traversing-in-java-using-nio/</link>
+      <link>http://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/</link>
       <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/recursive-file-tree-traversing-in-java-using-nio/</guid>
-      <description>&lt;p&gt;In my &lt;a href=&#34;/post/monitor-a-directory-for-changes-using-java/&#34;&gt;previous article about NIO.2&lt;/a&gt;,
+      <guid>http://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/</guid>
+      <description>&lt;p&gt;In my &lt;a href=&#34;http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/&#34;&gt;previous article about NIO.2&lt;/a&gt;,
 we have seen how to implement a service which monitors a directory recursively for any changes.
 In this article we will look at another improvement in JDK7 (NIO.2) called FileWatcher.
 This will allow us to implement a search or index. For example, we can find all the $some_pattern$ files in a given directory recursively and (or)
@@ -28,7 +28,7 @@ In a nutshell FileWatcher will get us a list of files from a file system based o
 We have two methods before the traversal starts at the directory level &amp;amp; file level, and one method after the traversal is complete,
 which can be used for clean up or post processing. The important points from the interface is given in the below diagram.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;While I think FileVistor is the best way to handle this, JDK7 NIO.2 has given another option to achieve the same, a class named SimpleFileVistor (which implements FileVisitor).
 It should be self explanatory, a simplified version of FileVisitor.
@@ -87,7 +87,7 @@ public FileVisitResult preVisitDirectory(Path directoryPath) {
 
 &lt;p&gt;Once this is completed, we can use the postVisitDirectory() to perform additional tasks or any cleanup if needed. A sample output from my machine is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;The complete source code is given below. Please note that you need JDK7 to run this code.
 Source is also available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2_file-visitor&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
@@ -122,10 +122,10 @@ Source is also available in &lt;a href=&#34;https://github.com/venishjoe/blog-co
     
     <item>
       <title>Monitor a Directory for Changes using Java</title>
-      <link>/post/monitor-a-directory-for-changes-using-java/</link>
+      <link>http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/</link>
       <pubDate>Sun, 18 Oct 2009 02:23:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/monitor-a-directory-for-changes-using-java/</guid>
+      <guid>http://venishjoe.net/post/monitor-a-directory-for-changes-using-java/</guid>
       <description>&lt;p&gt;Many applications which we use on a day to day basis like a music organizer, file editors monitor the directory for any changes in the files/directories and
 take appropriate action in the application if there are any changes detected on the fly.
 Since Java do not have direct access to the system level calls (unless we use JNI, which will make the code platform specific)
@@ -191,7 +191,7 @@ Once the program starts running, start creating some directories/files or modify
 the program will start triggering the event and you should be able to watch the modifications in the console.
 A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00006/monitor-a-directory-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00006/monitor-a-directory-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2-watch-folder&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 

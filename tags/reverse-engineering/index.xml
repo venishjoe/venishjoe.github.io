@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Reverse Engineering on VENISHJOE.NET</title>
-    <link>/tags/reverse-engineering/index.xml</link>
+    <link>http://venishjoe.net/tags/reverse-engineering/index.xml</link>
     <description>Recent content in Reverse Engineering on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/tags/reverse-engineering/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/tags/reverse-engineering/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Dynamically Load Compiled Java Class as a Byte Array and Execute</title>
-      <link>/post/dynamically-load-compiled-java-class/</link>
+      <link>http://venishjoe.net/post/dynamically-load-compiled-java-class/</link>
       <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/dynamically-load-compiled-java-class/</guid>
+      <guid>http://venishjoe.net/post/dynamically-load-compiled-java-class/</guid>
       <description>&lt;p&gt;As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
 This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
 I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
@@ -81,7 +81,7 @@ printStream.print(bytesStringBuffer.length()==0 ? &#34;&#34; :
 
 &lt;p&gt;Now let’s run this file and generate the output. A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
 custom class loader which will “reconstruct” the class from these bytes and run it,
@@ -135,7 +135,7 @@ regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
 If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
 Sample output from my machine below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 
@@ -144,10 +144,10 @@ Sample output from my machine below.&lt;/p&gt;
     
     <item>
       <title>Recover Database Passwords from Weblogic Server</title>
-      <link>/post/recover-database-passwords-from-weblogic-server/</link>
+      <link>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
       <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/recover-database-passwords-from-weblogic-server/</guid>
+      <guid>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
       <description>&lt;p&gt;In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
 If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
 The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
@@ -212,7 +212,7 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
 
 &lt;p&gt;Sample output is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This was tested with Weblogic Server 8.1 and JDK 1.6.&lt;/p&gt;
 

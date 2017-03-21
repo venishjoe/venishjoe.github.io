@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Server on VENISHJOE.NET</title>
-    <link>/tags/server/index.xml</link>
+    <link>http://venishjoe.net/tags/server/index.xml</link>
     <description>Recent content in Server on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/tags/server/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/tags/server/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Simple Proxy Server in Java</title>
-      <link>/post/simple-proxy-server-in-java/</link>
+      <link>http://venishjoe.net/post/simple-proxy-server-in-java/</link>
       <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/simple-proxy-server-in-java/</guid>
+      <guid>http://venishjoe.net/post/simple-proxy-server-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
 From &lt;a href=&#34;http://en.wikipedia.org/wiki/Proxy_server&#34;&gt;Wikipedia&lt;/a&gt;, &amp;ldquo;a proxy server is a server (a computer system or an application program)
 that acts as an intermediary for requests from clients seeking resources from other servers.&amp;ldquo;The proxy server generally has some resources,
@@ -32,7 +32,7 @@ there is risk of that data being exposed unless there is some kind of encryption
 proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
 where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
 We will start by declaring some constants.&lt;/p&gt;

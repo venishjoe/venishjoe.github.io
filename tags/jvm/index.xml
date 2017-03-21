@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Jvm on VENISHJOE.NET</title>
-    <link>/tags/jvm/index.xml</link>
+    <link>http://venishjoe.net/tags/jvm/index.xml</link>
     <description>Recent content in Jvm on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="/tags/jvm/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://venishjoe.net/tags/jvm/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Dynamically Load Compiled Java Class as a Byte Array and Execute</title>
-      <link>/post/dynamically-load-compiled-java-class/</link>
+      <link>http://venishjoe.net/post/dynamically-load-compiled-java-class/</link>
       <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>/post/dynamically-load-compiled-java-class/</guid>
+      <guid>http://venishjoe.net/post/dynamically-load-compiled-java-class/</guid>
       <description>&lt;p&gt;As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
 This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
 I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
@@ -81,7 +81,7 @@ printStream.print(bytesStringBuffer.length()==0 ? &#34;&#34; :
 
 &lt;p&gt;Now let’s run this file and generate the output. A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
 custom class loader which will “reconstruct” the class from these bytes and run it,
@@ -135,7 +135,7 @@ regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
 If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
 Sample output from my machine below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 
