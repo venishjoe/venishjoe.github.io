@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Password Recovery on VENISHJOE.NET</title>
-    <link>http://venishjoe.net/tags/password-recovery/index.xml</link>
+    <link>https://venishjoe.net/tags/password-recovery/index.xml</link>
     <description>Recent content in Password Recovery on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="http://venishjoe.net/tags/password-recovery/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://venishjoe.net/tags/password-recovery/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Recover Database Passwords from Weblogic Server</title>
-      <link>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
+      <link>https://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
       <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
+      <guid>https://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
       <description>&lt;p&gt;In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
 If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
 The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
@@ -81,7 +81,7 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
 
 &lt;p&gt;Sample output is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This was tested with Weblogic Server 8.1 and JDK 1.6.&lt;/p&gt;
 

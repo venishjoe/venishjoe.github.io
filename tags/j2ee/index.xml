@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>J2ee on VENISHJOE.NET</title>
-    <link>http://venishjoe.net/tags/j2ee/index.xml</link>
+    <link>https://venishjoe.net/tags/j2ee/index.xml</link>
     <description>Recent content in J2ee on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="http://venishjoe.net/tags/j2ee/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://venishjoe.net/tags/j2ee/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Dynamic Columns in JSP Model with Struts Framework</title>
-      <link>http://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</link>
+      <link>https://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</link>
       <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</guid>
+      <guid>https://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</guid>
       <description>&lt;p&gt;While developing web applications, we will come across a lot of scenarios where we should use dynamic columns depending on the entitlement of the user or
 from the result set depending on the data itself. Dynamic columns in web applications give control to the user on what he wants to see
 (specially when we have a huge amount of data to work with). For applications with sensitive data,
@@ -26,7 +26,7 @@ this can be even extended to act as a security layer where the access to specifi
 
 &lt;h5 id=&#34;high-level-architecture&#34;&gt;High Level Architecture&lt;/h5&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;In a nut shell, this design uses the Application Context of the container to maintain the values pertaining to a particular user,
 if the requirement demands not to maintain the preference after a user session is terminated, then it can be achieved by destroying the object stored in the context.&lt;/p&gt;

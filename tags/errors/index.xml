@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Errors on VENISHJOE.NET</title>
-    <link>http://venishjoe.net/tags/errors/index.xml</link>
+    <link>https://venishjoe.net/tags/errors/index.xml</link>
     <description>Recent content in Errors on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="http://venishjoe.net/tags/errors/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://venishjoe.net/tags/errors/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Recover from Out of Memory Errors in Java</title>
-      <link>http://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</link>
+      <link>https://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</link>
       <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</guid>
+      <guid>https://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/</guid>
       <description>&lt;p&gt;In Java, as any other programming language there is a restriction of amount of memory any program can use.
 In languages like C the memory is limited to amount of RAM the operating system allocates to the applications or the user space.
 Since Java applications are technically running in the Java Virtual Machine (JVM), the applications have memory allocated by the JVM.

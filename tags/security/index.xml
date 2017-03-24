@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Security on VENISHJOE.NET</title>
-    <link>http://venishjoe.net/tags/security/index.xml</link>
+    <link>https://venishjoe.net/tags/security/index.xml</link>
     <description>Recent content in Security on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="http://venishjoe.net/tags/security/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://venishjoe.net/tags/security/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Dynamically Load Compiled Java Class as a Byte Array and Execute</title>
-      <link>http://venishjoe.net/post/dynamically-load-compiled-java-class/</link>
+      <link>https://venishjoe.net/post/dynamically-load-compiled-java-class/</link>
       <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/dynamically-load-compiled-java-class/</guid>
+      <guid>https://venishjoe.net/post/dynamically-load-compiled-java-class/</guid>
       <description>&lt;p&gt;As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
 This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
 I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
@@ -81,7 +81,7 @@ printStream.print(bytesStringBuffer.length()==0 ? &#34;&#34; :
 
 &lt;p&gt;Now let’s run this file and generate the output. A sample output from my machine is below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
 custom class loader which will “reconstruct” the class from these bytes and run it,
@@ -135,7 +135,7 @@ regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
 If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
 Sample output from my machine below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Full source of this application is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
 
@@ -144,10 +144,10 @@ Sample output from my machine below.&lt;/p&gt;
     
     <item>
       <title>Signing Java Objects for Secure Transfer</title>
-      <link>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</link>
+      <link>https://venishjoe.net/post/signing-java-objects-for-secure-transfer/</link>
       <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/signing-java-objects-for-secure-transfer/</guid>
+      <guid>https://venishjoe.net/post/signing-java-objects-for-secure-transfer/</guid>
       <description>&lt;p&gt;In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
 object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
 when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.&lt;/p&gt;
@@ -161,7 +161,7 @@ Public-Key cryptography is a asymmetric key algorithm, where the key used to enc
 &lt;p&gt;This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
 and in the second part, we will verify it.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00005/signing-java-objects-class-layout.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;sign-the-java-object&#34;&gt;Sign the Java Object&lt;/h5&gt;
 
@@ -288,7 +288,7 @@ If its true then everything looks good and we can successfully verify the POJO a
 
 &lt;p&gt;If you run this application, we will get an output similar to below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00005/signing-java-objects-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.&lt;/p&gt;
 
@@ -299,10 +299,10 @@ If its true then everything looks good and we can successfully verify the POJO a
     
     <item>
       <title>Simple Proxy Server in Java</title>
-      <link>http://venishjoe.net/post/simple-proxy-server-in-java/</link>
+      <link>https://venishjoe.net/post/simple-proxy-server-in-java/</link>
       <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/simple-proxy-server-in-java/</guid>
+      <guid>https://venishjoe.net/post/simple-proxy-server-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
 From &lt;a href=&#34;http://en.wikipedia.org/wiki/Proxy_server&#34;&gt;Wikipedia&lt;/a&gt;, &amp;ldquo;a proxy server is a server (a computer system or an application program)
 that acts as an intermediary for requests from clients seeking resources from other servers.&amp;ldquo;The proxy server generally has some resources,
@@ -318,7 +318,7 @@ there is risk of that data being exposed unless there is some kind of encryption
 proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
 where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00003/simple-proxy-server-architecture.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
 We will start by declaring some constants.&lt;/p&gt;
@@ -404,10 +404,10 @@ That will need some work with JNI. I will explain that in a later post.&lt;/p&gt
     
     <item>
       <title>Recover Database Passwords from Weblogic Server</title>
-      <link>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
+      <link>https://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</link>
       <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
+      <guid>https://venishjoe.net/post/recover-database-passwords-from-weblogic-server/</guid>
       <description>&lt;p&gt;In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
 If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
 The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
@@ -472,7 +472,7 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
 
 &lt;p&gt;Sample output is given below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00002/recover-database-passwords-output.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;This was tested with Weblogic Server 8.1 and JDK 1.6.&lt;/p&gt;
 
@@ -481,10 +481,10 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
     
     <item>
       <title>Serial Key Generation and Validation in Java</title>
-      <link>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</link>
+      <link>https://venishjoe.net/post/serial-key-generation-and-validation-in-java/</link>
       <pubDate>Mon, 31 Aug 2009 23:54:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</guid>
+      <guid>https://venishjoe.net/post/serial-key-generation-and-validation-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.&lt;/p&gt;
 
 &lt;p&gt;&lt;b&gt;&lt;font color=&#34;red&#34;&gt;WARNING:&lt;/font&gt;&lt;/b&gt; Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.&lt;/p&gt;
@@ -503,7 +503,7 @@ This will generate a total of 104 digits, since we need only 18 of them, we can 
 
 &lt;p&gt;The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;generating-the-serial&#34;&gt;Generating the Serial&lt;/h5&gt;
 
@@ -584,7 +584,7 @@ else
 
 &lt;p&gt;Sample output from this program is demonstrated below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>

@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Core Java on VENISHJOE.NET</title>
-    <link>http://venishjoe.net/tags/core-java/index.xml</link>
+    <link>https://venishjoe.net/tags/core-java/index.xml</link>
     <description>Recent content in Core Java on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="http://venishjoe.net/tags/core-java/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://venishjoe.net/tags/core-java/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Java String Concatenation and Performance</title>
-      <link>http://venishjoe.net/post/java-string-concatenation-and-performance/</link>
+      <link>https://venishjoe.net/post/java-string-concatenation-and-performance/</link>
       <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/java-string-concatenation-and-performance/</guid>
+      <guid>https://venishjoe.net/post/java-string-concatenation-and-performance/</guid>
       <description>&lt;p&gt;The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
 This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
 But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
@@ -89,7 +89,7 @@ for (int outerIndex=0;outerIndex&amp;lt;=OUTER_ITERATION;outerIndex++) {
 
 &lt;p&gt;The output from the 21 iterations of the program is plotted below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00009/java-string-concatenation-and-performance.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
 We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.
@@ -123,10 +123,10 @@ To have the best performance, the clear choice is StringBuilder as long as you d
     
     <item>
       <title>Serial Key Generation and Validation in Java</title>
-      <link>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</link>
+      <link>https://venishjoe.net/post/serial-key-generation-and-validation-in-java/</link>
       <pubDate>Mon, 31 Aug 2009 23:54:00 +0000</pubDate>
       <author>venish@venishjoe.net (Venish Joe Clarence)</author>
-      <guid>http://venishjoe.net/post/serial-key-generation-and-validation-in-java/</guid>
+      <guid>https://venishjoe.net/post/serial-key-generation-and-validation-in-java/</guid>
       <description>&lt;p&gt;In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.&lt;/p&gt;
 
 &lt;p&gt;&lt;b&gt;&lt;font color=&#34;red&#34;&gt;WARNING:&lt;/font&gt;&lt;/b&gt; Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.&lt;/p&gt;
@@ -145,7 +145,7 @@ This will generate a total of 104 digits, since we need only 18 of them, we can 
 
 &lt;p&gt;The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00001/serial-key-generation-algorithm.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;h5 id=&#34;generating-the-serial&#34;&gt;Generating the Serial&lt;/h5&gt;
 
@@ -226,7 +226,7 @@ else
 
 &lt;p&gt;Sample output from this program is demonstrated below.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&#34;http://venishjoe.net/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00001/serial-key-generation-output.jpg#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;/p&gt;</description>
     </item>
