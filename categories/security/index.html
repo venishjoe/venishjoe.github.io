@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-10-21T21:20:00&#43;00:00"/>
+<meta property="og:updated_time" content="2017-04-09T01:40:22-05:00"/>
 
 
 
@@ -57,6 +57,224 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Security</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/java-bytecode-manipulation/" rel="bookmark">Java Bytecode Manipulation</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this article, I will show how to manipulate a compiled class file directly without decompiling it to java.</p>
+
+<p>I will be using <a href="http://jboss-javassist.github.io/javassist/">Javassist (Java Programming Assistant)</a>, an external library for most of this tutorial.
+<a href="https://github.com/jboss-javassist/javassist/zipball/master">Download</a> latest JAR file to get examples work. I am using version <em>rel_3_22_0_cr1-4-g6a3ed31</em>.</p>
+
+<p>Every java file compiled will generate a class file which is a binary file containing Java bytecode which can be executed on any Java Virtual Machine.
+Since the class files are generally not dependent on the platform they are compiled on, it makes Java applications platform independent.
+In this article, we will explore how to statically analyze class files, modify them programmatically and execute.</p>
+
+<h5 id="sample-class-for-bytecode-manipulation">Sample Class for Bytecode Manipulation</h5>
+
+<p>We will start with a simple test class (ByteCodeEditorTest) which we will use to modify using Javassist. This class file will get an input from user and check if it matches
+a predefined value within code and output message accordingly.</p>
+
+<pre><code class="java">public String checkStatus(String _inputString){
+    if (_inputString.equals("MAGIC"))
+        return "Right!";
+    return "Wrong";
+}
+</code></pre>
+
+<p>Once compiled, and executed below is a sample behaviour of the class. We will modify compiled class file directly to change its behaviour by modifying equality operator.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Wrong
+$ java ByteCodeEditorTest MAGIC
+Right!
+</code></pre>
+
+<p>Let&rsquo;s start by looking at the compiled class file using javap. I have provided snippet of checkStatus() method from test class.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifeq          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>The disassembled code contains mnemonic for Java bytecode instructions. We will be heavily using these as a part of bytecode manipulation.
+Refer to <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">Java bytecode instruction listings</a> Wikipedia
+article which contains all mnemonic and Opcode for Java bytecode.</p>
+
+<p>Interesting line is on index 6 from disassembled code which contains mnemonic ifeq which compares input string against built in value.
+Let&rsquo;s use Javassist to modify equality operator from ifeq to ifne.</p>
+
+<h5 id="bytecode-manipulation-using-javassist">Bytecode Manipulation using Javassist</h5>
+
+<p>Now that we have our test class and details on what has to be modified in bytecode, let&rsquo;s create a new class file which loads compiled ByteCodeEditorTest class
+for manipulation. With Javassist JAR in classpath, let&rsquo;s load the test class file using javassist.CtClass.</p>
+
+<pre><code class="java">ClassPool _classPool = ClassPool.getDefault();
+CtClass _ctClass = _classPool.makeClass(new FileInputStream("ByteCodeEditorTest.class"));
+</code></pre>
+
+<p>Once ByteCodeEditorTest class is loaded, we will use javassist.CtMethod to extract all the methods from class and then use
+javassist.bytecode.CodeAttribute &amp; javassist.bytecode.CodeIterator to manipulate the class.</p>
+
+<p>CodeIterator allows us to traverse every bytecode instruction from class file and also provides methods to manipulate them. In our case,
+from the javap output we know index 6 has to modified to change instruction set from ifeq to ifne. Looking at Opcode reference, hex value
+for ifne is 9a. We will be using decimal format to update bytecode using CodeIterator.</p>
+
+<p>So we will be using CodeIterator.writeByte() method to update index 6 of ByteCodeEditorTest from exising value to 154 (9a converted to decimal).
+Below table shows existing value (row1) and new value (row2)</p>
+
+<table>
+<thead>
+<tr>
+<th>Mnemonic</th>
+<th>Opcode (Hex)</th>
+<th>Opcode (Decimal)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>ifeq</td>
+<td>0x99</td>
+<td>153</td>
+</tr>
+
+<tr>
+<td>ifne</td>
+<td>0x9a</td>
+<td>154</td>
+</tr>
+</tbody>
+</table>
+
+<pre><code class="java">for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfCode = _codeIterator.next();
+        int _valueOfIndex8Bit = _codeIterator.byteAt(_indexOfCode);
+        //Checking index 6 and if Opcode is ifeq
+        if(_valueOfIndex8Bit==153 && _indexOfCode==6) {
+            //Changing instruction from ifeq to ifne
+            _codeIterator.writeByte(154, _indexOfCode);
+        }
+    }
+}
+//Write changes to class file
+_ctClass.writeFile();
+</code></pre>
+
+<p>Once this code is run, ByteCodeEditorTest class file will be modified with updated instructions.
+When running javap on ByteCodeEditorTest now, it will produce below result of checkStatus() method.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifne          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>As you can see, index 6 is now changed to ifne. Running ByteCodeEditorTest now will produce results which we were after.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Right!
+</code></pre>
+
+<p>ByteCodeEditorTest class file was successfully modified to alter program flow without the need for re-compilation or decompilation.</p>
+
+<p>While this is a simple modification to a class file, we can do complex changes of adding new methods, classes, injecting code etc. using
+Javassist library. I will cover complex scenarios in another article, but will give a high level overview of frequently used in
+APIs in next section.</p>
+
+<h5 id="other-javassist-apis">Other Javassist APIs</h5>
+
+<p>While I covered bytecode manipulation, Javassist is a powerful library which can be used for complex changes. Highlighting some of those features here.</p>
+
+<p>javassist.CtMethod class can be used to inject new methods to existing class files.</p>
+
+<pre><code class="java">//Defrosts so that the class can be modified
+_ctClass.defrost();
+CtMethod _ctMethod = CtNewMethod.make("public int newMethodFromJA() { return 1; }", _ctClass);
+_ctClass.writeFile();
+</code></pre>
+
+<p>javassist.CtMethod class can also be used to inject code to existing class/methods using insertBefore(), insertAfter() and insertAt() methods.</p>
+
+<pre><code class="java">for(CtMethod method:_ctClass.getDeclaredMethods()){
+    //Defrosts so that the class can be modified
+    _ctClass.defrost();
+    method.insertBefore("System.out.println(\"Before every method call....\");");
+    _ctClass.writeFile();
+}
+</code></pre>
+
+<p>Javassist can also be used for static analysis of class files by displaying all method code (disassembled) of a class file or to display bytecode of a class file.</p>
+
+<pre><code class="java">//Display Method Code
+PrintStream _printStream = new PrintStream(System.out);
+InstructionPrinter instructionPrinter = new InstructionPrinter(_printStream);
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    System.out.println("Method: " + method.getName());
+    instructionPrinter.print(method);
+}
+//Display Bytecode
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    _ctClass.defrost();
+    System.out.println("Method: " +_ctMethods.getName());
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfInstruction = _codeIterator.next();
+        int _indexValue8Bit = _codeIterator.byteAt(_indexOfInstruction);
+        System.out.println(Mnemonic.OPCODE[_indexValue8Bit]);
+    }
+}
+</code></pre>
+
+<p>Full source code for all snippets referenced in this article is available in <a href="https://github.com/venishjoe/blog-code/tree/master/bytecode-manipulation">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jvm/" rel="tag">JVM</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/classloader/" rel="tag">ClassLoader</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -207,184 +425,10 @@ Sample output from my machine below.</p>
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/signing-java-objects-for-secure-transfer/" rel="bookmark">Signing Java Objects for Secure Transfer</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
-object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
-when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.</p>
-
-<p>In this article, we will build two simple applications, one which generates the object, the keys (public &amp; private) and signs the object with the private key.
-Other application which verifies the signed object in other end over the network or another application in the same machine. Both these apps can run independently in different machines.
-For signing the object we will be using Public-Key cryptography. This is one of the most widely used standards to sign data along with DSA &amp; SHA1PRNG
-(cryptographically strong pseudo-random number generator (PRNG)).
-Public-Key cryptography is a asymmetric key algorithm, where the key used to encrypt a message is not the same as the key used to decrypt it.</p>
-
-<p>This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
-and in the second part, we will verify it.</p>
-
-<p><img src="/media/images/00005/signing-java-objects-class-layout.png#floatcenter" alt="" /></p>
-
-<h5 id="sign-the-java-object">Sign the Java Object</h5>
-
-<p>First of all we need a class which will generate a public and private key.
-We will create a class named SecurityUtil which will generate those based on DSA (we can use RSA or any other algorithm as long as its available)
-and we will generate a cryptographically strong pseudo-random number generator (PRNG) which can be clubbed along with DSA (SHA1PRNG).
-The strength of the key will be 1024.</p>
-
-<pre><code class="java">protected KeyPair generateKey () throws Exception {
-    KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("DSA");
-    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-    keyPairGen.initialize(1024,secureRandom);
-    KeyPair keyPair = keyPairGen.generateKeyPair();
-    return keyPair;
-}
-</code></pre>
-
-<p>Next we will create a class named EmployeeValueObject which is nothing but a POJO with a HashMap getter/setter.
-This will be the object which we will be transferring over the network/application. Since we serialize the object before transferring, this class should implement Serializable.</p>
-
-<pre><code class="java">public class EmployeeValueObject implements Serializable {
-    HashMap employeeSalary = new HashMap();
-    public void setSalary (HashMap employeeSalary){
-        this.employeeSalary = employeeSalary;
-    }
-
-    public HashMap getSalary () {
-        return employeeSalary;
-    }
-}
-</code></pre>
-
-<p>Now we have all the supporting classes which we need and let’s start building the main application.
-Let’s call this class EmployeeDetails and this will create an object for the POJO which we created in our previous step and populate with some data.
-In addition to that, we will sign the POJO object and then serialize to a file.
-In this example we will be also serializing the public key to transfer to the other end.
-Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
-
-<p>Let’s create the POJO and populate with some data in the HashMap.</p>
-
-<pre><code class="java">EmployeeValueObject employeeVO = new EmployeeValueObject();
-employeeVO.setSalary(populateData());
-
-private static HashMap populateData (){
-    HashMap employeeSalary = new HashMap ();
-    employeeSalary.put("3", "Johns, Galvin D. --> $18,000");
-    employeeSalary.put("4", "Weber, Murphy I. --> $5,000");
-
-    return employeeSalary;
-}
-</code></pre>
-
-<p>Now let’s generate the public and private keys from SecutityUtil and sign the POJO which we created in the above step.</p>
-
-<pre><code class="java">KeyPair keyPair = new SecurityUtil().generateKey();
-PrivateKey privateKey = keyPair.getPrivate();
-PublicKey publicKey = keyPair.getPublic();
-
-Signature digitalSignature = Signature.getInstance(privateKey.getAlgorithm());
-SignedObject digitalSignedObj =
-    new SignedObject(employeeVO, privateKey, digitalSignature);
-</code></pre>
-
-<p>Now digitalSignedObj is a digitally signed data with the private key which we generated. Now let’s serialize this object for the secure transfer.</p>
-
-<pre><code class="java">ileOutputStream serializedFileOutput = new FileOutputStream("employee.ser");
-ObjectOutputStream serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
-serializedObjOutput.writeObject(digitalSignedObj);
-serializedObjOutput.close();
-serializedFileOutput.close();
-</code></pre>
-
-<p>We will also serialize the public key so that for this example we can send both of them to another machine to verify.
-Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
-
-<pre><code class="java">serializedFileOutput = new FileOutputStream("publickey.ser");
-serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
-serializedObjOutput.writeObject(publicKey);
-serializedObjOutput.close();
-serializedFileOutput.close();
-</code></pre>
-
-<p>This will complete the creation of application one. When you run this application, it will create two new files in the same directory.
-employee.ser – which is the signed and serialized POJO (Salary details) &amp; publickey.ser – public key to verify the POJO.
-Now using the appropriate protocol send these files to the other application (remote or local) and let’s start building the verification part.</p>
-
-<h5 id="verification-amp-de-serializing-the-java-object">Verification &amp; De-Serializing the Java Object</h5>
-
-<p>As a start we have the files employee.ser &amp; publickey.ser. Let’s start building up the class to verify and de-serialize these files.
-Let’s name this class DecryptEmployee. The following code should de-serialize the objects.</p>
-
-<pre><code class="java">FileInputStream serializedPublicKeyIn = new FileInputStream("publicKey.ser");
-ObjectInputStream serializedPublicKey = new ObjectInputStream(serializedPublicKeyIn);
-PublicKey publicKey = (PublicKey) serializedPublicKey.readObject();
-
-FileInputStream serializedEmployeeIn = new FileInputStream("employee.ser");
-ObjectInputStream serializedEmployee = new ObjectInputStream(serializedEmployeeIn);
-SignedObject digitalSignedObj = (SignedObject) serializedEmployee.readObject();
-</code></pre>
-
-<p>Since the public key was not signed, publicKey variable will be readable.
-But the employee POJO was signed, so we are reading the object as a SignedObject. Let’s move forward and verify this.</p>
-
-<pre><code class="java">Signature digitalSignature = Signature.getInstance(publicKey.getAlgorithm());
-boolean decryptFlag = digitalSignedObj.verify(publicKey, digitalSignature);
-</code></pre>
-
-<p>The decryptFlag contains the status of the verification.
-If the public key is incorrect or if the object was tampered, then this will return false and we won’t be able to verify the object.
-If its true then everything looks good and we can successfully verify the POJO and print the values from HashMap.</p>
-
-<pre><code class="java">if(decryptFlag) {
-    EmployeeValueObject employeeVO = (EmployeeValueObject) digitalSignedObj.getObject();
-    HashMap employeeSalary = (HashMap) employeeVO.getSalary();
-    Collection collHashMap = employeeSalary.values();
-    Iterator collectionIterator = collHashMap.iterator();
-    while (collectionIterator.hasNext()) {
-        System.out.println(collectionIterator.next());
-    }
-} else {
-    System.out.println ("Decryption Failed. Please check the Keys.");
-}
-</code></pre>
-
-<p>If you run this application, we will get an output similar to below.</p>
-
-<p><img src="/media/images/00005/signing-java-objects-output.png#floatcenter" alt="" /></p>
-
-<p>This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.</p>
-
-<p>UPDATE: SignedObject signs the object, but it doesn&rsquo;t encrypt it. So if you need encryption, you can use the Cipher class in Java.</p>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/sign/" rel="tag">Sign</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/encryption/" rel="tag">Encryption</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/rsa/" rel="tag">RSA</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
-	<span class="pagination__item pagination__item--current">1/2</span>
+	<span class="pagination__item pagination__item--current">1/3</span>
 	<a class="pagination__item pagination__item--next" href="/categories/security/page/2/">»</a>
 </div>
 
@@ -416,10 +460,10 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
 		</ul>
 	</div>
 </div>
@@ -443,8 +487,8 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Tags</h4>
 	<div class="widget__content">
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
@@ -452,12 +496,12 @@ If its true then everything looks good and we can successfully verify the POJO a
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
@@ -465,9 +509,9 @@ If its true then everything looks good and we can successfully verify the POJO a
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
@@ -480,9 +524,10 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Links</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
-			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
 		</ul>
 	</div>
 </div>

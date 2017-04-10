@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Bytecode Manipulation - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.19" />
+<meta property="og:title" content="Java Bytecode Manipulation" />
+<meta property="og:description" content="In this article, I will show how to manipulate a compiled class file directly without decompiling it to java.
+
+I will be using Javassist (Java Programming Assistant), an external library for most of this tutorial.
+Download latest JAR file to get examples work. I am using version rel_3_22_0_cr1-4-g6a3ed31.
+
+Every java file compiled will generate a class file which is a binary file containing Java bytecode which can be executed on any Java Virtual Machine.
+Since the class files are generally not dependent on the platform they are compiled on, it makes Java applications platform independent.
+In this article, we will explore how to statically analyze class files, modify them programmatically and execute.
+
+Sample Class for Bytecode Manipulation
+
+We will start with a simple test class (ByteCodeEditorTest) which we will use to modify using Javassist. This class file will get an input from user and check if it matches
+a predefined value within code and output message accordingly.
+
+public String checkStatus(String _inputString){
+    if (_inputString.equals(&#34;MAGIC&#34;))
+        return &#34;Right!&#34;;
+    return &#34;Wrong&#34;;
+}
+
+
+Once compiled, and executed below is a sample behaviour of the class. We will modify compiled class file directly to change its behaviour by modifying equality operator.
+
+$ java ByteCodeEditorTest TEST
+Wrong
+$ java ByteCodeEditorTest MAGIC
+Right!
+
+
+Let&rsquo;s start by looking at the compiled class file using javap. I have provided snippet of checkStatus() method from test class.
+
+$ javap -c ByteCodeEditorTest
+Compiled from &#34;ByteCodeEditorTest.java&#34;
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifeq          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+
+
+The disassembled code contains mnemonic for Java bytecode instructions. We will be heavily using these as a part of bytecode manipulation.
+Refer to Java bytecode instruction listings Wikipedia
+article which contains all mnemonic and Opcode for Java bytecode.
+
+Interesting line is on index 6 from disassembled code which contains mnemonic ifeq which compares input string against built in value.
+Let&rsquo;s use Javassist to modify equality operator from ifeq to ifne.
+
+Bytecode Manipulation using Javassist
+
+Now that we have our test class and details on what has to be modified in bytecode, let&rsquo;s create a new class file which loads compiled ByteCodeEditorTest class
+for manipulation. With Javassist JAR in classpath, let&rsquo;s load the test class file using javassist.CtClass.
+
+ClassPool _classPool = ClassPool.getDefault();
+CtClass _ctClass = _classPool.makeClass(new FileInputStream(&#34;ByteCodeEditorTest.class&#34;));
+
+
+Once ByteCodeEditorTest class is loaded, we will use javassist.CtMethod to extract all the methods from class and then use
+javassist.bytecode.CodeAttribute &amp; javassist.bytecode.CodeIterator to manipulate the class.
+
+CodeIterator allows us to traverse every bytecode instruction from class file and also provides methods to manipulate them. In our case,
+from the javap output we know index 6 has to modified to change instruction set from ifeq to ifne. Looking at Opcode reference, hex value
+for ifne is 9a. We will be using decimal format to update bytecode using CodeIterator.
+
+So we will be using CodeIterator.writeByte() method to update index 6 of ByteCodeEditorTest from exising value to 154 (9a converted to decimal).
+Below table shows existing value (row1) and new value (row2)
+
+
+
+
+Mnemonic
+Opcode (Hex)
+Opcode (Decimal)
+
+
+
+
+
+ifeq
+0x99
+153
+
+
+
+ifne
+0x9a
+154
+
+
+
+
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfCode = _codeIterator.next();
+        int _valueOfIndex8Bit = _codeIterator.byteAt(_indexOfCode);
+        //Checking index 6 and if Opcode is ifeq
+        if(_valueOfIndex8Bit==153 && _indexOfCode==6) {
+            //Changing instruction from ifeq to ifne
+            _codeIterator.writeByte(154, _indexOfCode);
+        }
+    }
+}
+//Write changes to class file
+_ctClass.writeFile();
+
+
+Once this code is run, ByteCodeEditorTest class file will be modified with updated instructions.
+When running javap on ByteCodeEditorTest now, it will produce below result of checkStatus() method.
+
+$ javap -c ByteCodeEditorTest
+Compiled from &#34;ByteCodeEditorTest.java&#34;
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifne          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+
+
+As you can see, index 6 is now changed to ifne. Running ByteCodeEditorTest now will produce results which we were after.
+
+$ java ByteCodeEditorTest TEST
+Right!
+
+
+ByteCodeEditorTest class file was successfully modified to alter program flow without the need for re-compilation or decompilation.
+
+While this is a simple modification to a class file, we can do complex changes of adding new methods, classes, injecting code etc. using
+Javassist library. I will cover complex scenarios in another article, but will give a high level overview of frequently used in
+APIs in next section.
+
+Other Javassist APIs
+
+While I covered bytecode manipulation, Javassist is a powerful library which can be used for complex changes. Highlighting some of those features here.
+
+javassist.CtMethod class can be used to inject new methods to existing class files.
+
+//Defrosts so that the class can be modified
+_ctClass.defrost();
+CtMethod _ctMethod = CtNewMethod.make(&#34;public int newMethodFromJA() { return 1; }&#34;, _ctClass);
+_ctClass.writeFile();
+
+
+javassist.CtMethod class can also be used to inject code to existing class/methods using insertBefore(), insertAfter() and insertAt() methods.
+
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    //Defrosts so that the class can be modified
+    _ctClass.defrost();
+    method.insertBefore(&#34;System.out.println(\&#34;Before every method call....\&#34;);&#34;);
+    _ctClass.writeFile();
+}
+
+
+Javassist can also be used for static analysis of class files by displaying all method code (disassembled) of a class file or to display bytecode of a class file.
+
+//Display Method Code
+PrintStream _printStream = new PrintStream(System.out);
+InstructionPrinter instructionPrinter = new InstructionPrinter(_printStream);
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    System.out.println(&#34;Method: &#34; &#43; method.getName());
+    instructionPrinter.print(method);
+}
+//Display Bytecode
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    _ctClass.defrost();
+    System.out.println(&#34;Method: &#34; &#43;_ctMethods.getName());
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfInstruction = _codeIterator.next();
+        int _indexValue8Bit = _codeIterator.byteAt(_indexOfInstruction);
+        System.out.println(Mnemonic.OPCODE[_indexValue8Bit]);
+    }
+}
+
+
+Full source code for all snippets referenced in this article is available in my github page.
+
+" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://venishjoe.net/post/java-bytecode-manipulation/" />
+
+
+
+<meta property="article:published_time" content="2017-04-09T01:40:22-05:00"/>
+<meta property="article:modified_time" content="2017-04-09T01:40:22-05:00"/>
+
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="https://venishjoe.net/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="https://venishjoe.net/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="https://venishjoe.net/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="https://venishjoe.net/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+<div class="main-content content" role="main" itemprop="mainContentOfPage">
+	<article class="post">
+		<header class="post__header clearfix">
+			<h1 class="post__title">Java Bytecode Manipulation</h1>
+			<p class="post__meta meta">
+				
+				<span class="post__meta-categories meta-categories">
+					<svg class="icon icon-category" height="16" viewBox="0 0 16 16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="m7 2l1 2h8v11h-16v-13z"/></svg>
+					<a class="meta-categories__link" href="/categories/programming" rel="category">Programming</a>, <a class="meta-categories__link" href="/categories/reverse-engineering" rel="category">Reverse Engineering</a>, <a class="meta-categories__link" href="/categories/security" rel="category">Security</a></span>
+			</p>
+		</header>
+		<div class="post__content clearfix">
+			<p>In this article, I will show how to manipulate a compiled class file directly without decompiling it to java.</p>
+
+<p>I will be using <a href="http://jboss-javassist.github.io/javassist/">Javassist (Java Programming Assistant)</a>, an external library for most of this tutorial.
+<a href="https://github.com/jboss-javassist/javassist/zipball/master">Download</a> latest JAR file to get examples work. I am using version <em>rel_3_22_0_cr1-4-g6a3ed31</em>.</p>
+
+<p>Every java file compiled will generate a class file which is a binary file containing Java bytecode which can be executed on any Java Virtual Machine.
+Since the class files are generally not dependent on the platform they are compiled on, it makes Java applications platform independent.
+In this article, we will explore how to statically analyze class files, modify them programmatically and execute.</p>
+
+<h5 id="sample-class-for-bytecode-manipulation">Sample Class for Bytecode Manipulation</h5>
+
+<p>We will start with a simple test class (ByteCodeEditorTest) which we will use to modify using Javassist. This class file will get an input from user and check if it matches
+a predefined value within code and output message accordingly.</p>
+
+<pre><code class="java">public String checkStatus(String _inputString){
+    if (_inputString.equals("MAGIC"))
+        return "Right!";
+    return "Wrong";
+}
+</code></pre>
+
+<p>Once compiled, and executed below is a sample behaviour of the class. We will modify compiled class file directly to change its behaviour by modifying equality operator.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Wrong
+$ java ByteCodeEditorTest MAGIC
+Right!
+</code></pre>
+
+<p>Let&rsquo;s start by looking at the compiled class file using javap. I have provided snippet of checkStatus() method from test class.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifeq          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>The disassembled code contains mnemonic for Java bytecode instructions. We will be heavily using these as a part of bytecode manipulation.
+Refer to <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">Java bytecode instruction listings</a> Wikipedia
+article which contains all mnemonic and Opcode for Java bytecode.</p>
+
+<p>Interesting line is on index 6 from disassembled code which contains mnemonic ifeq which compares input string against built in value.
+Let&rsquo;s use Javassist to modify equality operator from ifeq to ifne.</p>
+
+<h5 id="bytecode-manipulation-using-javassist">Bytecode Manipulation using Javassist</h5>
+
+<p>Now that we have our test class and details on what has to be modified in bytecode, let&rsquo;s create a new class file which loads compiled ByteCodeEditorTest class
+for manipulation. With Javassist JAR in classpath, let&rsquo;s load the test class file using javassist.CtClass.</p>
+
+<pre><code class="java">ClassPool _classPool = ClassPool.getDefault();
+CtClass _ctClass = _classPool.makeClass(new FileInputStream("ByteCodeEditorTest.class"));
+</code></pre>
+
+<p>Once ByteCodeEditorTest class is loaded, we will use javassist.CtMethod to extract all the methods from class and then use
+javassist.bytecode.CodeAttribute &amp; javassist.bytecode.CodeIterator to manipulate the class.</p>
+
+<p>CodeIterator allows us to traverse every bytecode instruction from class file and also provides methods to manipulate them. In our case,
+from the javap output we know index 6 has to modified to change instruction set from ifeq to ifne. Looking at Opcode reference, hex value
+for ifne is 9a. We will be using decimal format to update bytecode using CodeIterator.</p>
+
+<p>So we will be using CodeIterator.writeByte() method to update index 6 of ByteCodeEditorTest from exising value to 154 (9a converted to decimal).
+Below table shows existing value (row1) and new value (row2)</p>
+
+<table>
+<thead>
+<tr>
+<th>Mnemonic</th>
+<th>Opcode (Hex)</th>
+<th>Opcode (Decimal)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>ifeq</td>
+<td>0x99</td>
+<td>153</td>
+</tr>
+
+<tr>
+<td>ifne</td>
+<td>0x9a</td>
+<td>154</td>
+</tr>
+</tbody>
+</table>
+
+<pre><code class="java">for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfCode = _codeIterator.next();
+        int _valueOfIndex8Bit = _codeIterator.byteAt(_indexOfCode);
+        //Checking index 6 and if Opcode is ifeq
+        if(_valueOfIndex8Bit==153 && _indexOfCode==6) {
+            //Changing instruction from ifeq to ifne
+            _codeIterator.writeByte(154, _indexOfCode);
+        }
+    }
+}
+//Write changes to class file
+_ctClass.writeFile();
+</code></pre>
+
+<p>Once this code is run, ByteCodeEditorTest class file will be modified with updated instructions.
+When running javap on ByteCodeEditorTest now, it will produce below result of checkStatus() method.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifne          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>As you can see, index 6 is now changed to ifne. Running ByteCodeEditorTest now will produce results which we were after.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Right!
+</code></pre>
+
+<p>ByteCodeEditorTest class file was successfully modified to alter program flow without the need for re-compilation or decompilation.</p>
+
+<p>While this is a simple modification to a class file, we can do complex changes of adding new methods, classes, injecting code etc. using
+Javassist library. I will cover complex scenarios in another article, but will give a high level overview of frequently used in
+APIs in next section.</p>
+
+<h5 id="other-javassist-apis">Other Javassist APIs</h5>
+
+<p>While I covered bytecode manipulation, Javassist is a powerful library which can be used for complex changes. Highlighting some of those features here.</p>
+
+<p>javassist.CtMethod class can be used to inject new methods to existing class files.</p>
+
+<pre><code class="java">//Defrosts so that the class can be modified
+_ctClass.defrost();
+CtMethod _ctMethod = CtNewMethod.make("public int newMethodFromJA() { return 1; }", _ctClass);
+_ctClass.writeFile();
+</code></pre>
+
+<p>javassist.CtMethod class can also be used to inject code to existing class/methods using insertBefore(), insertAfter() and insertAt() methods.</p>
+
+<pre><code class="java">for(CtMethod method:_ctClass.getDeclaredMethods()){
+    //Defrosts so that the class can be modified
+    _ctClass.defrost();
+    method.insertBefore("System.out.println(\"Before every method call....\");");
+    _ctClass.writeFile();
+}
+</code></pre>
+
+<p>Javassist can also be used for static analysis of class files by displaying all method code (disassembled) of a class file or to display bytecode of a class file.</p>
+
+<pre><code class="java">//Display Method Code
+PrintStream _printStream = new PrintStream(System.out);
+InstructionPrinter instructionPrinter = new InstructionPrinter(_printStream);
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    System.out.println("Method: " + method.getName());
+    instructionPrinter.print(method);
+}
+//Display Bytecode
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    _ctClass.defrost();
+    System.out.println("Method: " +_ctMethods.getName());
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfInstruction = _codeIterator.next();
+        int _indexValue8Bit = _codeIterator.byteAt(_indexOfInstruction);
+        System.out.println(Mnemonic.OPCODE[_indexValue8Bit]);
+    }
+}
+</code></pre>
+
+<p>Full source code for all snippets referenced in this article is available in <a href="https://github.com/venishjoe/blog-code/tree/master/bytecode-manipulation">my github</a> page.</p>
+
+<p></p>
+		</div>
+		<svg class="icon icon-time" height="14" viewBox="0 0 16 16" width="14" xmlns="http://www.w3.org/2000/svg"><path d="m8-.0000003c-4.4 0-8 3.6-8 8 0 4.4000003 3.6 8.0000003 8 8.0000003 4.4 0 8-3.6 8-8.0000003 0-4.4-3.6-8-8-8zm0 14.4000003c-3.52 0-6.4-2.88-6.4-6.4000003 0-3.52 2.88-6.4 6.4-6.4 3.52 0 6.4 2.88 6.4 6.4 0 3.5200003-2.88 6.4000003-6.4 6.4000003zm.4-10.4000003h-1.2v4.8l4.16 2.5600003.64-1.04-3.6-2.1600003z"/></svg>
+		<time class="post__meta-date" datetime="2017-04-09 01:40:22 -0500 -0500">Last Updated:&nbsp;&nbsp;April, 2017</time>
+		<br><br>
+		
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jvm/" rel="tag">JVM</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/classloader/" rel="tag">ClassLoader</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
+	</ul>
+</div>
+
+	</article>
+	
+<div class="authorbox clearfix">
+	<figure class="authorbox__avatar">
+		<img alt="Venish Joe Clarence avatar" src="https://venishjoe.net/images/venishjoe_net_logo.png" class="avatar" height="90" width="90">
+	</figure>
+	<div class="authorbox__header">
+		<span class="authorbox__name">About
+			<a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">
+				Venish Joe Clarence</a></span>
+	</div>
+	<div class="authorbox__description">
+		I have the ability to arrange 1&#39;s and 0&#39;s in such an order that an x86 processor can actually interpret and execute those commands. I make the world a better place by writing mindless back-end programs that no-one will ever see nor even know that it&#39;s there. But I know; and that&#39;s all that matters. -Alucard
+	</div>
+</div>
+	
+<nav class="post-nav row clearfix" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<div class="post-nav__item post-nav__item--prev col-1-2">
+		<a class="post-nav__link" href="https://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/" rel="prev"><span class="post-nav__caption">«Previous</span><p class="post-nav__post-title">Dynamic Columns in JSP Model with Struts Framework</p></a>
+	</div>
+</nav>
+
+	
+</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="https://venishjoe.net/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/system">System</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-292719-4', 'auto');
+ga('send', 'pageview');
+</script>
+
+</body>
+</html>

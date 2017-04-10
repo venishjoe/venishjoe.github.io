@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2010-04-18T21:41:00&#43;00:00"/>
+<meta property="og:updated_time" content="2017-04-09T01:40:22-05:00"/>
 
 
 
@@ -54,6 +54,224 @@
 		<div class="wrapper clearfix">
 
 	<div class="main-content loop content" role="main">
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/java-bytecode-manipulation/" rel="bookmark">Java Bytecode Manipulation</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this article, I will show how to manipulate a compiled class file directly without decompiling it to java.</p>
+
+<p>I will be using <a href="http://jboss-javassist.github.io/javassist/">Javassist (Java Programming Assistant)</a>, an external library for most of this tutorial.
+<a href="https://github.com/jboss-javassist/javassist/zipball/master">Download</a> latest JAR file to get examples work. I am using version <em>rel_3_22_0_cr1-4-g6a3ed31</em>.</p>
+
+<p>Every java file compiled will generate a class file which is a binary file containing Java bytecode which can be executed on any Java Virtual Machine.
+Since the class files are generally not dependent on the platform they are compiled on, it makes Java applications platform independent.
+In this article, we will explore how to statically analyze class files, modify them programmatically and execute.</p>
+
+<h5 id="sample-class-for-bytecode-manipulation">Sample Class for Bytecode Manipulation</h5>
+
+<p>We will start with a simple test class (ByteCodeEditorTest) which we will use to modify using Javassist. This class file will get an input from user and check if it matches
+a predefined value within code and output message accordingly.</p>
+
+<pre><code class="java">public String checkStatus(String _inputString){
+    if (_inputString.equals("MAGIC"))
+        return "Right!";
+    return "Wrong";
+}
+</code></pre>
+
+<p>Once compiled, and executed below is a sample behaviour of the class. We will modify compiled class file directly to change its behaviour by modifying equality operator.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Wrong
+$ java ByteCodeEditorTest MAGIC
+Right!
+</code></pre>
+
+<p>Let&rsquo;s start by looking at the compiled class file using javap. I have provided snippet of checkStatus() method from test class.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifeq          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>The disassembled code contains mnemonic for Java bytecode instructions. We will be heavily using these as a part of bytecode manipulation.
+Refer to <a href="https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings">Java bytecode instruction listings</a> Wikipedia
+article which contains all mnemonic and Opcode for Java bytecode.</p>
+
+<p>Interesting line is on index 6 from disassembled code which contains mnemonic ifeq which compares input string against built in value.
+Let&rsquo;s use Javassist to modify equality operator from ifeq to ifne.</p>
+
+<h5 id="bytecode-manipulation-using-javassist">Bytecode Manipulation using Javassist</h5>
+
+<p>Now that we have our test class and details on what has to be modified in bytecode, let&rsquo;s create a new class file which loads compiled ByteCodeEditorTest class
+for manipulation. With Javassist JAR in classpath, let&rsquo;s load the test class file using javassist.CtClass.</p>
+
+<pre><code class="java">ClassPool _classPool = ClassPool.getDefault();
+CtClass _ctClass = _classPool.makeClass(new FileInputStream("ByteCodeEditorTest.class"));
+</code></pre>
+
+<p>Once ByteCodeEditorTest class is loaded, we will use javassist.CtMethod to extract all the methods from class and then use
+javassist.bytecode.CodeAttribute &amp; javassist.bytecode.CodeIterator to manipulate the class.</p>
+
+<p>CodeIterator allows us to traverse every bytecode instruction from class file and also provides methods to manipulate them. In our case,
+from the javap output we know index 6 has to modified to change instruction set from ifeq to ifne. Looking at Opcode reference, hex value
+for ifne is 9a. We will be using decimal format to update bytecode using CodeIterator.</p>
+
+<p>So we will be using CodeIterator.writeByte() method to update index 6 of ByteCodeEditorTest from exising value to 154 (9a converted to decimal).
+Below table shows existing value (row1) and new value (row2)</p>
+
+<table>
+<thead>
+<tr>
+<th>Mnemonic</th>
+<th>Opcode (Hex)</th>
+<th>Opcode (Decimal)</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>ifeq</td>
+<td>0x99</td>
+<td>153</td>
+</tr>
+
+<tr>
+<td>ifne</td>
+<td>0x9a</td>
+<td>154</td>
+</tr>
+</tbody>
+</table>
+
+<pre><code class="java">for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfCode = _codeIterator.next();
+        int _valueOfIndex8Bit = _codeIterator.byteAt(_indexOfCode);
+        //Checking index 6 and if Opcode is ifeq
+        if(_valueOfIndex8Bit==153 && _indexOfCode==6) {
+            //Changing instruction from ifeq to ifne
+            _codeIterator.writeByte(154, _indexOfCode);
+        }
+    }
+}
+//Write changes to class file
+_ctClass.writeFile();
+</code></pre>
+
+<p>Once this code is run, ByteCodeEditorTest class file will be modified with updated instructions.
+When running javap on ByteCodeEditorTest now, it will produce below result of checkStatus() method.</p>
+
+<pre><code class="assembler">$ javap -c ByteCodeEditorTest
+Compiled from "ByteCodeEditorTest.java"
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifne          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+</code></pre>
+
+<p>As you can see, index 6 is now changed to ifne. Running ByteCodeEditorTest now will produce results which we were after.</p>
+
+<pre><code class="bash">$ java ByteCodeEditorTest TEST
+Right!
+</code></pre>
+
+<p>ByteCodeEditorTest class file was successfully modified to alter program flow without the need for re-compilation or decompilation.</p>
+
+<p>While this is a simple modification to a class file, we can do complex changes of adding new methods, classes, injecting code etc. using
+Javassist library. I will cover complex scenarios in another article, but will give a high level overview of frequently used in
+APIs in next section.</p>
+
+<h5 id="other-javassist-apis">Other Javassist APIs</h5>
+
+<p>While I covered bytecode manipulation, Javassist is a powerful library which can be used for complex changes. Highlighting some of those features here.</p>
+
+<p>javassist.CtMethod class can be used to inject new methods to existing class files.</p>
+
+<pre><code class="java">//Defrosts so that the class can be modified
+_ctClass.defrost();
+CtMethod _ctMethod = CtNewMethod.make("public int newMethodFromJA() { return 1; }", _ctClass);
+_ctClass.writeFile();
+</code></pre>
+
+<p>javassist.CtMethod class can also be used to inject code to existing class/methods using insertBefore(), insertAfter() and insertAt() methods.</p>
+
+<pre><code class="java">for(CtMethod method:_ctClass.getDeclaredMethods()){
+    //Defrosts so that the class can be modified
+    _ctClass.defrost();
+    method.insertBefore("System.out.println(\"Before every method call....\");");
+    _ctClass.writeFile();
+}
+</code></pre>
+
+<p>Javassist can also be used for static analysis of class files by displaying all method code (disassembled) of a class file or to display bytecode of a class file.</p>
+
+<pre><code class="java">//Display Method Code
+PrintStream _printStream = new PrintStream(System.out);
+InstructionPrinter instructionPrinter = new InstructionPrinter(_printStream);
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    System.out.println("Method: " + method.getName());
+    instructionPrinter.print(method);
+}
+//Display Bytecode
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    _ctClass.defrost();
+    System.out.println("Method: " +_ctMethods.getName());
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfInstruction = _codeIterator.next();
+        int _indexValue8Bit = _codeIterator.byteAt(_indexOfInstruction);
+        System.out.println(Mnemonic.OPCODE[_indexValue8Bit]);
+    }
+}
+</code></pre>
+
+<p>Full source code for all snippets referenced in this article is available in <a href="https://github.com/venishjoe/blog-code/tree/master/bytecode-manipulation">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jvm/" rel="tag">JVM</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/classloader/" rel="tag">ClassLoader</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -232,137 +450,10 @@ Just before the bean write tag, have a logic equal tag to check for specific typ
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/java-string-concatenation-and-performance/" rel="bookmark">Java String Concatenation and Performance</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
-This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
-But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
-Given that String is immutable, for large number of string concatenation operations, using (+) will give us a worst performance.
-But how bad ? How StringBuffer, StringBuilder or String.concat() performs if we put them on a performance test ?.
-This article will try to answer those questions.</p>
-
-<p>We will be using <a href="https://github.com/perf4j/perf4j">Perf4J</a> to calculate the performance, since this library will give us aggregated performance statistics
-like mean, minimum, maximum, standard deviation over a set time span. In the code, we will concatenate a string (*)
-repeatedly 50,000 times and this iteration will be performed 21 times so that we can get a good standard deviation.
-The following methods will be used to concatenate strings.</p>
-
-<ul>
-<li>Concatenation Operator (+)</li>
-<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/String.html#concat%28java.lang.String%29">String concat method</a> - concat(String str)</li>
-<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/StringBuffer.html#append%28java.lang.String%29">StringBuffer append method</a> - append(String str)</li>
-<li><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/StringBuilder.html#append%28java.lang.String%29">StringBuilder append method</a> - append(String str)</li>
-</ul>
-
-<p>And finally we will look at the byte code to see how each of these operations perform. Let’s start building the class.
-Note that each of the block in the code should be wrapped around the Perf4J library to calculate the performance in each iteration.
-Let’s define the outer and inner iterations first.</p>
-
-<pre><code class="java">private static final int OUTER_ITERATION=20;
-private static final int INNER_ITERATION=50000;
-</code></pre>
-
-<p>Now let’s implement each of the four methods mentioned in the article.
-Nothing fancy here, plain implementations of (+), String.concat(), StringBuffer.append() &amp; StringBuilder.append().</p>
-
-<pre><code class="java">String addTestStr = "";
-String concatTestStr = "";
-StringBuffer concatTestSb = null;
-StringBuilder concatTestSbu = null;
-
-for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
-    StopWatch stopWatch = new LoggingStopWatch("StringAddConcat");
-    addTestStr = "";
-    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
-        addTestStr += "*";
-    stopWatch.stop();
-}
-
-for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
-    StopWatch stopWatch = new LoggingStopWatch("StringConcat");
-    concatTestStr = "";
-    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
-        concatTestStr = concatTestStr.concat("*");
-    stopWatch.stop();
-}
-
-for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
-    StopWatch stopWatch = new LoggingStopWatch("StringBufferConcat");
-    concatTestSb = new StringBuffer();
-    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
-        concatTestSb.append("*");
-    stopWatch.stop();
-}
-
-for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
-    StopWatch stopWatch = new LoggingStopWatch("StringBuilderConcat");
-    concatTestSbu = new StringBuilder();
-    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
-        concatTestSbu.append("*");
-    stopWatch.stop();
-}
-</code></pre>
-
-<p>Let’s run this program and generate the performance metrics. I ran this program in a 64-bit OS (Windows 7), 32-bit JVM (7-ea), Core 2 Quad CPU (2.00 GHz) with 4 GB RAM.</p>
-
-<p>The output from the 21 iterations of the program is plotted below.</p>
-
-<p><img src="/media/images/00009/java-string-concatenation-and-performance.png#floatcenter" alt="" /></p>
-
-<p>Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
-We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.
-I have included the whole byte code in the download package, but let’s have a look at the below snippet.</p>
-
-<pre><code class="bytecode">45: new #7; //class java/lang/StringBuilder
-48: dup
-49: invokespecial #8; //Method java/lang/StringBuilder."&lt;init&gt;":()V
-52: aload_1
-53: invokevirtual #9; //Method java/lang/StringBuilder.append:
-    (Ljava/lang/String;)Ljava/lang/StringBuilder;
-56: ldc #10; //String *
-58: invokevirtual #9; //Method java/lang/StringBuilder.append:
-    (Ljava/lang/String;)Ljava/lang/StringBuilder;
-61: invokevirtual #11; //Method java/lang/StringBuilder.toString:()
-    Ljava/lang/String;
-64: astore_1
-</code></pre>
-
-<p>This is the byte code for String.concat(), and its clear from this that the String.concat is using StringBuilder for concatenation and the performance should be as good as String Builder.
-But given that the source object being used is String, we do have some performance loss in String.concat.</p>
-
-<p>So for the simple operations we should use String.concat compared to (+), if we don’t want to create a new instance of StringBuffer/Builder.
-But for huge operations, we shouldn’t be using the concat operator, as seen in the performance results it will bring down the application to its knees and spike up the CPU utilization.
-To have the best performance, the clear choice is StringBuilder as long as you do not need thread-safety or synchronization.</p>
-
-<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/string-concatenation-perf">my github</a> page.</p>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/performance/" rel="tag">Performance</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/core-java/" rel="tag">Core Java</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
-	<span class="pagination__item pagination__item--current">1/5</span>
+	<span class="pagination__item pagination__item--current">1/6</span>
 	<a class="pagination__item pagination__item--next" href="/page/2/">»</a>
 </div>
 
@@ -394,10 +485,10 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
 		</ul>
 	</div>
 </div>
@@ -421,8 +512,8 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 	<h4 class="widget__title">Tags</h4>
 	<div class="widget__content">
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
@@ -430,12 +521,12 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
@@ -443,9 +534,9 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
@@ -458,9 +549,10 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 	<h4 class="widget__title">Links</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
-			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
 		</ul>
 	</div>
 </div>

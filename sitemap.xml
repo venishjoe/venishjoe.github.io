@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://venishjoe.net/post/java-bytecode-manipulation/</loc>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/</loc>
     <lastmod>2010-04-18T21:41:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -94,7 +101,7 @@
   
   <url>
     <loc>https://venishjoe.net/tags/bytecode/</loc>
-    <lastmod>2009-11-08T18:01:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -107,7 +114,7 @@
   
   <url>
     <loc>https://venishjoe.net/tags/classloader/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -170,7 +177,7 @@
   
   <url>
     <loc>https://venishjoe.net/tags/java/</loc>
-    <lastmod>2010-04-18T21:41:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -205,7 +212,7 @@
   
   <url>
     <loc>https://venishjoe.net/tags/jvm/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -268,14 +275,14 @@
   
   <url>
     <loc>https://venishjoe.net/post/</loc>
-    <lastmod>2010-04-18T21:41:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://venishjoe.net/categories/programming/</loc>
-    <lastmod>2010-04-18T21:41:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -289,14 +296,14 @@
   
   <url>
     <loc>https://venishjoe.net/tags/reverse-engineering/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://venishjoe.net/categories/reverse-engineering/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -310,14 +317,14 @@
   
   <url>
     <loc>https://venishjoe.net/tags/security/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://venishjoe.net/categories/security/</loc>
-    <lastmod>2009-10-21T21:20:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -372,7 +379,7 @@
   
   <url>
     <loc>https://venishjoe.net/</loc>
-    <lastmod>2010-04-18T21:41:00+00:00</lastmod>
+    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>

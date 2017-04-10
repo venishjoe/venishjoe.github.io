@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-10-18T02:23:00&#43;00:00"/>
+<meta property="og:updated_time" content="2009-10-21T21:20:00&#43;00:00"/>
 
 
 
@@ -57,6 +57,156 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Java</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/dynamically-load-compiled-java-class/" rel="bookmark">Dynamically Load Compiled Java Class as a Byte Array and Execute</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
+This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
+I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
+(which can be over the network) and execute the array of bytes.</p>
+
+<p>So the question arises, why should we write a custom class loader ? There are some distinct advantages. Some of them below</p>
+
+<ul>
+<li>We can load a class over any network protocol. Since the java class can be converted to a series of numbers (array of bytes), we can use most of the protocols.</li>
+<li>Load Dynamic classes based on the type of user, especially useful when you want to validate the license of your software over the web and if you are paranoid about the security.</li>
+<li>More flexible and secure, you can encrypt the byte stream (asymmetric or symmetric) ensuring safer delivery.</li>
+</ul>
+
+<p>For this article we will be creating three classes</p>
+
+<ol>
+<li>JavaClassLoader – The custom class loader which will load the array of bytes and execute. In other words, the client program.</li>
+<li>Class2Byte – The Java class which converts any compiled class / object to a array of bytes</li>
+<li>ClassLoaderInput – The class which will be converted to array of bytes and transferred</li>
+</ol>
+
+<p>Let’s divide this article into two sections, in the fist section we will convert the java class to array of bytes and in the second section, we will load that array.</p>
+
+<h5 id="create-convert-the-java-class-to-array-of-bytes">Create &amp; Convert the Java class to array of bytes</h5>
+
+<p>Let’s write a simple class (ClassLoaderInput) which just prints a line. This is the class which will be converted to a byte array.</p>
+
+<pre><code class="java">public class ClassLoaderInput {
+    public void printString() {
+        System.out.println("Hello World!");
+    }
+}
+</code></pre>
+
+<p>Now, let’s write another class (Class2Byte) which will convert the ClassLoaderInput to a byte of array.
+The concept to convert the file is simple, compile the above file and load the class file through input stream and with an offset
+read and convert the class to bytes and write the output in to another out stream.
+We need these bytes as a comma separated value, so we will use StringBuffer to add comma between the bytes.</p>
+
+<pre><code class="java">int _offset=0;
+int _read=0;
+
+File fileName = new File(args [0]);
+InputStream fileInputStream = new FileInputStream(fileName);
+FileOutputStream fileOutputStream = new FileOutputStream(args[1]);
+PrintStream printStream = new PrintStream(fileOutputStream);
+StringBuffer bytesStringBuffer = new StringBuffer();
+
+byte[] byteArray = new byte[(int)fileName.length()];
+while (_offset &lt; byteArray.length &amp;&amp;
+    (_read=fileInputStream.read(byteArray, _offset,
+    byteArray.length-_offset)) &gt;= 0)
+        _offset += _read;
+
+fileInputStream.close();
+for (int index = 0; index &lt; byteArray.length; index++)
+    bytesStringBuffer.append(byteArray[index]+",");
+
+printStream.print(bytesStringBuffer.length()==0 ? "" :
+    bytesStringBuffer.substring(0, bytesStringBuffer.length()-1));
+</code></pre>
+
+<p>Now let’s run this file and generate the output. A sample output from my machine is below.</p>
+
+<p><img src="/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter" alt="" /></p>
+
+<p>Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
+custom class loader which will “reconstruct” the class from these bytes and run it,
+without any physical trace in the client machine (the array of bytes will be on memory).</p>
+
+<h5 id="load-the-array-of-bytes-and-execute">Load the array of bytes and execute</h5>
+
+<p>Now, to the important part of this article, we are going to write a custom class loader which will load those bunch of numbers (array) and execute them.
+The array of bytes can be transferred over the network but in this example, we will define it as a string in the class loader for demonstration purpose.</p>
+
+<p>Let’s start by defining the array of bytes.</p>
+
+<pre><code class="java">private int[] data = {-54,-2,-70,-66,0,0,0,51,0,31,10,0,6,0,17,9,0,18,0,19,8,
+    0,20,10,0,21,0,22,7,0,23,7,0,24,1,0,6,60,105,110,105,116,62,1,0,3,40,41,86,1,
+    0,4,67,111,100,101,1,0,15,76,105,110,101,78,117,109,98,101,114,84,97,98,108,
+    101,1,0,18,76,111,99,97,108,86,97,114,105,97,98,108,101,84,97,98,108,101,1,0,
+    4,116,104,105,115,1,0,18,76,67,108,97,115,115,76,111,97,100,101,114,73,110,
+    112,117,116,59,1,0,11,112,114,105,110,116,83,116,114,105,110,103,1,0,10,83,
+    111,117,114,99,101,70,105,108,101,1,0,21,67,108,97,115,115,76,111,97,100,101,
+    114,73,110,112,117,116,46,106,97,118,97,12,0,7,0,8,7,0,25,12,0,26,0,27,1,0,
+    12,72,101,108,108,111,32,87,111,114,108,100,33,7,0,28,12,0,29,0,30,1,0,16,67,
+    108,97,115,115,76,111,97,100,101,114,73,110,112,117,116,1,0,16,106,97,118,97,
+    47,108,97,110,103,47,79,98,106,101,99,116,1,0,16,106,97,118,97,47,108,97,110,
+    103,47,83,121,115,116,101,109,1,0,3,111,117,116,1,0,21,76,106,97,118,97,47,105,
+    111,47,80,114,105,110,116,83,116,114,101,97,109,59,1,0,19,106,97,118,97,47,105,
+    111,47,80,114,105,110,116,83,116,114,101,97,109,1,0,7,112,114,105,110,116,108,
+    110,1,0,21,40,76,106,97,118,97,47,108,97,110,103,47,83,116,114,105,110,103,59,
+    41,86,0,33,0,5,0,6,0,0,0,0,0,2,0,1,0,7,0,8,0,1,0,9,0,0,0,47,0,1,0,1,0,0,0,5,42,
+    -73,0,1,-79,0,0,0,2,0,10,0,0,0,6,0,1,0,0,0,1,0,11,0,0,0,12,0,1,0,0,0,5,0,12,0,
+    13,0,0,0,1,0,14,0,8,0,1,0,9,0,0,0,55,0,2,0,1,0,0,0,9,-78,0,2,18,3,-74,0,4,-79,
+    0,0,0,2,0,10,0,0,0,10,0,2,0,0,0,3,0,8,0,4,0,11,0,0,0,12,0,1,0,0,0,9,0,12,0,13,
+    0,0,0,1,0,15,0,0,0,2,0,16};
+</code></pre>
+
+<p>The conversion of these bytes to class is done by the <a href="http://java.sun.com/j2se/1.3/docs/api/java/lang/ClassLoader.html#defineClass%28byte[],%20int,%20int%29">ClassLoader.defineClass()</a>
+method We should supply the stream of bytes that make up the class data.
+The bytes in positions off through off+len-1 should have the format of a valid class file as defined by the <a href="http://java.sun.com/docs/books/vmspec/">Java Virtual Machine Specification</a>.
+The offset and length will be the additional parameters. Once the defineClass converts the array to class,
+then we can use reflection to execute the methods in the class.</p>
+
+<pre><code class="java">JavaClassLoader _classLoader = new JavaClassLoader();
+byte[] rawBytes = new byte[_classLoader.data.length];
+for (int index = 0; index &lt; rawBytes.length; index++)
+    rawBytes[index] = (byte) _classLoader.data[index];
+Class regeneratedClass = _classLoader.defineClass(args[0],
+    rawBytes, 0, rawBytes.length);
+regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
+</code></pre>
+
+<p>Now, let’s compile the class loader and run. The the class file name &amp; method name should be passed as a run time argument.
+If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
+Sample output from my machine below.</p>
+
+<p><img src="/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter" alt="" /></p>
+
+<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jvm/" rel="tag">JVM</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/classloader/" rel="tag">ClassLoader</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -178,185 +328,11 @@ public static void main (String args[]) throws Exception {
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/signing-java-objects-for-secure-transfer/" rel="bookmark">Signing Java Objects for Secure Transfer</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>In distributed J2EE applications or in any application where you need to transfer Java objects to another system then there is always a security risk where the
-object can be intercepted which can result in data theft/loss. Especially in Serialization, (where the object is a physical file in the native file system)
-when the serialized Java objects are sent through the network, whoever knows the type of the object can always read it.</p>
-
-<p>In this article, we will build two simple applications, one which generates the object, the keys (public &amp; private) and signs the object with the private key.
-Other application which verifies the signed object in other end over the network or another application in the same machine. Both these apps can run independently in different machines.
-For signing the object we will be using Public-Key cryptography. This is one of the most widely used standards to sign data along with DSA &amp; SHA1PRNG
-(cryptographically strong pseudo-random number generator (PRNG)).
-Public-Key cryptography is a asymmetric key algorithm, where the key used to encrypt a message is not the same as the key used to decrypt it.</p>
-
-<p>This is the class diagram of the applications which we will be building. This article will be divided into two parts, the first part we will sign the object (serialized)
-and in the second part, we will verify it.</p>
-
-<p><img src="/media/images/00005/signing-java-objects-class-layout.png#floatcenter" alt="" /></p>
-
-<h5 id="sign-the-java-object">Sign the Java Object</h5>
-
-<p>First of all we need a class which will generate a public and private key.
-We will create a class named SecurityUtil which will generate those based on DSA (we can use RSA or any other algorithm as long as its available)
-and we will generate a cryptographically strong pseudo-random number generator (PRNG) which can be clubbed along with DSA (SHA1PRNG).
-The strength of the key will be 1024.</p>
-
-<pre><code class="java">protected KeyPair generateKey () throws Exception {
-    KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("DSA");
-    SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-    keyPairGen.initialize(1024,secureRandom);
-    KeyPair keyPair = keyPairGen.generateKeyPair();
-    return keyPair;
-}
-</code></pre>
-
-<p>Next we will create a class named EmployeeValueObject which is nothing but a POJO with a HashMap getter/setter.
-This will be the object which we will be transferring over the network/application. Since we serialize the object before transferring, this class should implement Serializable.</p>
-
-<pre><code class="java">public class EmployeeValueObject implements Serializable {
-    HashMap employeeSalary = new HashMap();
-    public void setSalary (HashMap employeeSalary){
-        this.employeeSalary = employeeSalary;
-    }
-
-    public HashMap getSalary () {
-        return employeeSalary;
-    }
-}
-</code></pre>
-
-<p>Now we have all the supporting classes which we need and let’s start building the main application.
-Let’s call this class EmployeeDetails and this will create an object for the POJO which we created in our previous step and populate with some data.
-In addition to that, we will sign the POJO object and then serialize to a file.
-In this example we will be also serializing the public key to transfer to the other end.
-Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
-
-<p>Let’s create the POJO and populate with some data in the HashMap.</p>
-
-<pre><code class="java">EmployeeValueObject employeeVO = new EmployeeValueObject();
-employeeVO.setSalary(populateData());
-
-private static HashMap populateData (){
-    HashMap employeeSalary = new HashMap ();
-    employeeSalary.put("3", "Johns, Galvin D. --> $18,000");
-    employeeSalary.put("4", "Weber, Murphy I. --> $5,000");
-
-    return employeeSalary;
-}
-</code></pre>
-
-<p>Now let’s generate the public and private keys from SecutityUtil and sign the POJO which we created in the above step.</p>
-
-<pre><code class="java">KeyPair keyPair = new SecurityUtil().generateKey();
-PrivateKey privateKey = keyPair.getPrivate();
-PublicKey publicKey = keyPair.getPublic();
-
-Signature digitalSignature = Signature.getInstance(privateKey.getAlgorithm());
-SignedObject digitalSignedObj =
-    new SignedObject(employeeVO, privateKey, digitalSignature);
-</code></pre>
-
-<p>Now digitalSignedObj is a digitally signed data with the private key which we generated. Now let’s serialize this object for the secure transfer.</p>
-
-<pre><code class="java">ileOutputStream serializedFileOutput = new FileOutputStream("employee.ser");
-ObjectOutputStream serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
-serializedObjOutput.writeObject(digitalSignedObj);
-serializedObjOutput.close();
-serializedFileOutput.close();
-</code></pre>
-
-<p>We will also serialize the public key so that for this example we can send both of them to another machine to verify.
-Note: In production implementations, both these objects shouldn’t be sent at the same time. The application at the other end should already have the public key)</p>
-
-<pre><code class="java">serializedFileOutput = new FileOutputStream("publickey.ser");
-serializedObjOutput = new ObjectOutputStream(serializedFileOutput);
-serializedObjOutput.writeObject(publicKey);
-serializedObjOutput.close();
-serializedFileOutput.close();
-</code></pre>
-
-<p>This will complete the creation of application one. When you run this application, it will create two new files in the same directory.
-employee.ser – which is the signed and serialized POJO (Salary details) &amp; publickey.ser – public key to verify the POJO.
-Now using the appropriate protocol send these files to the other application (remote or local) and let’s start building the verification part.</p>
-
-<h5 id="verification-amp-de-serializing-the-java-object">Verification &amp; De-Serializing the Java Object</h5>
-
-<p>As a start we have the files employee.ser &amp; publickey.ser. Let’s start building up the class to verify and de-serialize these files.
-Let’s name this class DecryptEmployee. The following code should de-serialize the objects.</p>
-
-<pre><code class="java">FileInputStream serializedPublicKeyIn = new FileInputStream("publicKey.ser");
-ObjectInputStream serializedPublicKey = new ObjectInputStream(serializedPublicKeyIn);
-PublicKey publicKey = (PublicKey) serializedPublicKey.readObject();
-
-FileInputStream serializedEmployeeIn = new FileInputStream("employee.ser");
-ObjectInputStream serializedEmployee = new ObjectInputStream(serializedEmployeeIn);
-SignedObject digitalSignedObj = (SignedObject) serializedEmployee.readObject();
-</code></pre>
-
-<p>Since the public key was not signed, publicKey variable will be readable.
-But the employee POJO was signed, so we are reading the object as a SignedObject. Let’s move forward and verify this.</p>
-
-<pre><code class="java">Signature digitalSignature = Signature.getInstance(publicKey.getAlgorithm());
-boolean decryptFlag = digitalSignedObj.verify(publicKey, digitalSignature);
-</code></pre>
-
-<p>The decryptFlag contains the status of the verification.
-If the public key is incorrect or if the object was tampered, then this will return false and we won’t be able to verify the object.
-If its true then everything looks good and we can successfully verify the POJO and print the values from HashMap.</p>
-
-<pre><code class="java">if(decryptFlag) {
-    EmployeeValueObject employeeVO = (EmployeeValueObject) digitalSignedObj.getObject();
-    HashMap employeeSalary = (HashMap) employeeVO.getSalary();
-    Collection collHashMap = employeeSalary.values();
-    Iterator collectionIterator = collHashMap.iterator();
-    while (collectionIterator.hasNext()) {
-        System.out.println(collectionIterator.next());
-    }
-} else {
-    System.out.println ("Decryption Failed. Please check the Keys.");
-}
-</code></pre>
-
-<p>If you run this application, we will get an output similar to below.</p>
-
-<p><img src="/media/images/00005/signing-java-objects-output.png#floatcenter" alt="" /></p>
-
-<p>This can be used in any sensitive application to make sure that the objects which are transferred over the network are safe.</p>
-
-<p>UPDATE: SignedObject signs the object, but it doesn&rsquo;t encrypt it. So if you need encryption, you can use the Cipher class in Java.</p>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/sign/" rel="tag">Sign</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/encryption/" rel="tag">Encryption</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/rsa/" rel="tag">RSA</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
 	<a class="pagination__item pagination__item--prev" href="/tags/java/page/2/">«</a>
-	<span class="pagination__item pagination__item--current">3/5</span>
+	<span class="pagination__item pagination__item--current">3/6</span>
 	<a class="pagination__item pagination__item--next" href="/tags/java/page/4/">»</a>
 </div>
 
@@ -388,10 +364,10 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
 		</ul>
 	</div>
 </div>
@@ -415,8 +391,8 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Tags</h4>
 	<div class="widget__content">
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
@@ -424,12 +400,12 @@ If its true then everything looks good and we can successfully verify the POJO a
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
@@ -437,9 +413,9 @@ If its true then everything looks good and we can successfully verify the POJO a
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
@@ -452,9 +428,10 @@ If its true then everything looks good and we can successfully verify the POJO a
 	<h4 class="widget__title">Links</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
-			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
 		</ul>
 	</div>
 </div>

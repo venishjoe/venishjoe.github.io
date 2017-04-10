@@ -12,6 +12,205 @@
     <atom:link href="https://venishjoe.net/tags/bytecode/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Java Bytecode Manipulation</title>
+      <link>https://venishjoe.net/post/java-bytecode-manipulation/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/post/java-bytecode-manipulation/</guid>
+      <description>&lt;p&gt;In this article, I will show how to manipulate a compiled class file directly without decompiling it to java.&lt;/p&gt;
+
+&lt;p&gt;I will be using &lt;a href=&#34;http://jboss-javassist.github.io/javassist/&#34;&gt;Javassist (Java Programming Assistant)&lt;/a&gt;, an external library for most of this tutorial.
+&lt;a href=&#34;https://github.com/jboss-javassist/javassist/zipball/master&#34;&gt;Download&lt;/a&gt; latest JAR file to get examples work. I am using version &lt;em&gt;rel_3_22_0_cr1-4-g6a3ed31&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;Every java file compiled will generate a class file which is a binary file containing Java bytecode which can be executed on any Java Virtual Machine.
+Since the class files are generally not dependent on the platform they are compiled on, it makes Java applications platform independent.
+In this article, we will explore how to statically analyze class files, modify them programmatically and execute.&lt;/p&gt;
+
+&lt;h5 id=&#34;sample-class-for-bytecode-manipulation&#34;&gt;Sample Class for Bytecode Manipulation&lt;/h5&gt;
+
+&lt;p&gt;We will start with a simple test class (ByteCodeEditorTest) which we will use to modify using Javassist. This class file will get an input from user and check if it matches
+a predefined value within code and output message accordingly.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;public String checkStatus(String _inputString){
+    if (_inputString.equals(&#34;MAGIC&#34;))
+        return &#34;Right!&#34;;
+    return &#34;Wrong&#34;;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once compiled, and executed below is a sample behaviour of the class. We will modify compiled class file directly to change its behaviour by modifying equality operator.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;bash&#34;&gt;$ java ByteCodeEditorTest TEST
+Wrong
+$ java ByteCodeEditorTest MAGIC
+Right!
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Let&amp;rsquo;s start by looking at the compiled class file using javap. I have provided snippet of checkStatus() method from test class.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;assembler&#34;&gt;$ javap -c ByteCodeEditorTest
+Compiled from &#34;ByteCodeEditorTest.java&#34;
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifeq          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The disassembled code contains mnemonic for Java bytecode instructions. We will be heavily using these as a part of bytecode manipulation.
+Refer to &lt;a href=&#34;https://en.wikipedia.org/wiki/Java_bytecode_instruction_listings&#34;&gt;Java bytecode instruction listings&lt;/a&gt; Wikipedia
+article which contains all mnemonic and Opcode for Java bytecode.&lt;/p&gt;
+
+&lt;p&gt;Interesting line is on index 6 from disassembled code which contains mnemonic ifeq which compares input string against built in value.
+Let&amp;rsquo;s use Javassist to modify equality operator from ifeq to ifne.&lt;/p&gt;
+
+&lt;h5 id=&#34;bytecode-manipulation-using-javassist&#34;&gt;Bytecode Manipulation using Javassist&lt;/h5&gt;
+
+&lt;p&gt;Now that we have our test class and details on what has to be modified in bytecode, let&amp;rsquo;s create a new class file which loads compiled ByteCodeEditorTest class
+for manipulation. With Javassist JAR in classpath, let&amp;rsquo;s load the test class file using javassist.CtClass.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;ClassPool _classPool = ClassPool.getDefault();
+CtClass _ctClass = _classPool.makeClass(new FileInputStream(&#34;ByteCodeEditorTest.class&#34;));
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once ByteCodeEditorTest class is loaded, we will use javassist.CtMethod to extract all the methods from class and then use
+javassist.bytecode.CodeAttribute &amp;amp; javassist.bytecode.CodeIterator to manipulate the class.&lt;/p&gt;
+
+&lt;p&gt;CodeIterator allows us to traverse every bytecode instruction from class file and also provides methods to manipulate them. In our case,
+from the javap output we know index 6 has to modified to change instruction set from ifeq to ifne. Looking at Opcode reference, hex value
+for ifne is 9a. We will be using decimal format to update bytecode using CodeIterator.&lt;/p&gt;
+
+&lt;p&gt;So we will be using CodeIterator.writeByte() method to update index 6 of ByteCodeEditorTest from exising value to 154 (9a converted to decimal).
+Below table shows existing value (row1) and new value (row2)&lt;/p&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Mnemonic&lt;/th&gt;
+&lt;th&gt;Opcode (Hex)&lt;/th&gt;
+&lt;th&gt;Opcode (Decimal)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;ifeq&lt;/td&gt;
+&lt;td&gt;0x99&lt;/td&gt;
+&lt;td&gt;153&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;ifne&lt;/td&gt;
+&lt;td&gt;0x9a&lt;/td&gt;
+&lt;td&gt;154&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfCode = _codeIterator.next();
+        int _valueOfIndex8Bit = _codeIterator.byteAt(_indexOfCode);
+        //Checking index 6 and if Opcode is ifeq
+        if(_valueOfIndex8Bit==153 &amp;&amp; _indexOfCode==6) {
+            //Changing instruction from ifeq to ifne
+            _codeIterator.writeByte(154, _indexOfCode);
+        }
+    }
+}
+//Write changes to class file
+_ctClass.writeFile();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once this code is run, ByteCodeEditorTest class file will be modified with updated instructions.
+When running javap on ByteCodeEditorTest now, it will produce below result of checkStatus() method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;assembler&#34;&gt;$ javap -c ByteCodeEditorTest
+Compiled from &#34;ByteCodeEditorTest.java&#34;
+  public java.lang.String checkStatus(java.lang.String);
+    Code:
+       0: aload_1
+       1: ldc           #7      // String MAGIC
+       3: invokevirtual #8      // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       6: ifne          12
+       9: ldc           #9      // String Right!
+      11: areturn
+      12: ldc           #10     // String Wrong
+      14: areturn
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;As you can see, index 6 is now changed to ifne. Running ByteCodeEditorTest now will produce results which we were after.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;bash&#34;&gt;$ java ByteCodeEditorTest TEST
+Right!
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ByteCodeEditorTest class file was successfully modified to alter program flow without the need for re-compilation or decompilation.&lt;/p&gt;
+
+&lt;p&gt;While this is a simple modification to a class file, we can do complex changes of adding new methods, classes, injecting code etc. using
+Javassist library. I will cover complex scenarios in another article, but will give a high level overview of frequently used in
+APIs in next section.&lt;/p&gt;
+
+&lt;h5 id=&#34;other-javassist-apis&#34;&gt;Other Javassist APIs&lt;/h5&gt;
+
+&lt;p&gt;While I covered bytecode manipulation, Javassist is a powerful library which can be used for complex changes. Highlighting some of those features here.&lt;/p&gt;
+
+&lt;p&gt;javassist.CtMethod class can be used to inject new methods to existing class files.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;//Defrosts so that the class can be modified
+_ctClass.defrost();
+CtMethod _ctMethod = CtNewMethod.make(&#34;public int newMethodFromJA() { return 1; }&#34;, _ctClass);
+_ctClass.writeFile();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;javassist.CtMethod class can also be used to inject code to existing class/methods using insertBefore(), insertAfter() and insertAt() methods.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;for(CtMethod method:_ctClass.getDeclaredMethods()){
+    //Defrosts so that the class can be modified
+    _ctClass.defrost();
+    method.insertBefore(&#34;System.out.println(\&#34;Before every method call....\&#34;);&#34;);
+    _ctClass.writeFile();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Javassist can also be used for static analysis of class files by displaying all method code (disassembled) of a class file or to display bytecode of a class file.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;java&#34;&gt;//Display Method Code
+PrintStream _printStream = new PrintStream(System.out);
+InstructionPrinter instructionPrinter = new InstructionPrinter(_printStream);
+for(CtMethod method:_ctClass.getDeclaredMethods()){
+    System.out.println(&#34;Method: &#34; + method.getName());
+    instructionPrinter.print(method);
+}
+//Display Bytecode
+for(CtMethod _ctMethods:_ctClass.getDeclaredMethods()){
+    _ctClass.defrost();
+    System.out.println(&#34;Method: &#34; +_ctMethods.getName());
+    CodeAttribute _codeAttribute = _ctMethods.getMethodInfo().getCodeAttribute();
+    CodeIterator _codeIterator = _codeAttribute.iterator();
+    while (_codeIterator.hasNext()) {
+        int _indexOfInstruction = _codeIterator.next();
+        int _indexValue8Bit = _codeIterator.byteAt(_indexOfInstruction);
+        System.out.println(Mnemonic.OPCODE[_indexValue8Bit]);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Full source code for all snippets referenced in this article is available in &lt;a href=&#34;https://github.com/venishjoe/blog-code/tree/master/bytecode-manipulation&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+    <item>
       <title>Java String Concatenation and Performance</title>
       <link>https://venishjoe.net/post/java-string-concatenation-and-performance/</link>
       <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>

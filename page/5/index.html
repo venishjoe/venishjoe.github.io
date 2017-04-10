@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-09-20T17:24:00&#43;00:00"/>
+<meta property="og:updated_time" content="2009-09-27T00:55:00&#43;00:00"/>
 
 
 
@@ -54,6 +54,129 @@
 		<div class="wrapper clearfix">
 
 	<div class="main-content loop content" role="main">
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/simple-proxy-server-in-java/" rel="bookmark">Simple Proxy Server in Java</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this post, I am going to show how a simple Proxy server can be designed in Java which will provide the core functionalities of a proxy.
+From <a href="http://en.wikipedia.org/wiki/Proxy_server">Wikipedia</a>, &ldquo;a proxy server is a server (a computer system or an application program)
+that acts as an intermediary for requests from clients seeking resources from other servers.&ldquo;The proxy server generally has some resources,
+or has access to some resources and when it receives request from a client, it access the appropriate resource and sends back the response.</p>
+
+<p>So it serves two purposes, giving access to a resource which the client do not have access and it hides the real client who needs the resource.
+The second part is used for the anonymous browsing in Internet using anonymous proxy servers.
+Although this may not be as “anonymous” as it sounds because the proxy server which you connect to can maintain logs about the clients who are connecting to the server,
+and also the bigger risk being the data theft. Since the “anonymous” proxy server has access to all the request you send,
+there is risk of that data being exposed unless there is some kind of encryption in place between the client and the proxy server.</p>
+
+<p>If you are in a network, and the machine which you are using don’t have access to Internet but another machine in the same subnet has access to Internet, then you can run this
+proxy application in the machine which has Internet access and in your local machine, you can configure your web browser to use the IP and Port number of the machine
+where the proxy is running in the LAN/Network settings. Once done, you should be able to access the Internet. This is one of the practical use for proxy servers.</p>
+
+<p><img src="/media/images/00003/simple-proxy-server-architecture.png#floatcenter" alt="" /></p>
+
+<p>The proxy server which we will be designing will be a simple HTTP proxy which gets web requests based on HTTP protocol and sends back response in the same protocol.
+We will start by declaring some constants.</p>
+
+<pre><code class="java">int proxyServerPortNumber = 7879;
+int webServerPortNumber = 80;
+String webServerIpAddress = "192.168.1.1";
+final int PROXY_SERVER_TIME_OUT = 5000;
+final int SOCKET_TIME_OUT = 2000;
+</code></pre>
+
+<p>proxyServerPortNumber defines the port where the proxy server will be listening. You can use any port number which is not used by other process / standard port.</p>
+
+<p>webServerIpAddress and webServerPortNumber defines the IP/port where the server can access the resources. Since we are designing this to access websites over http,
+the port is defined as 80 and the IP should be a machine which has Internet access (can be localhost too)</p>
+
+<p>PROXY_SERVER_TIME_OUT and SOCKET_TIME_OUT are standard parameters defined for Server and network socket timeout. You can adjust this based on your needs.</p>
+
+<p>Now we need to start the Java class to bind to the port number defined and to run in a infinite loop or as a daemon thread, so that it keeps on listening for requests.
+In this example, we will be using the infinite loop.</p>
+
+<pre><code class="java">try {
+    serverSocket = new ServerSocket(proxyServerPortNumber);
+} catch(Exception exc) {
+        System.exit(0);
+}
+</code></pre>
+
+<p>Now the process will be listening in the port 7879 for requests from clients. Now, let’s open an infinte loop and make a connection to the resource, in our case the web server.</p>
+
+<pre><code class="java">socketProxy = new Socket(InetAddress.getByName(webServerIpAddress),webServerPortNumber);
+socketProxy.setSoTimeout(PROXY_SERVER_TIME_OUT);
+socket = serverSocket.accept();
+socket.setSoTimeout(SOCKET_TIME_OUT);
+inputStream = socket.getInputStream();
+</code></pre>
+
+<p>The request from the client will be received by Input Stream, so once we are connected, we will be sending this Input Stream which is nothing but a normal HTTP REQ object
+to the server which has the resource or as in our case the machine connected to Internet. The server will respond with the response which will be a HTTP RES over the
+Java Output Stream. We will be forwarding this output stream to the client which will be rendered in the application which the client requested in.
+That is if the request was sent through command line, the entire HTML will be printed, if its a browser the page will be rendered.</p>
+
+<pre><code class="java">try {
+    while( (intCounter = in.read()) != -1) {
+        if(intCounter == -1) break;
+        if(!bREQ)
+            bREQ = true;
+        pOutputStream.write(intCounter);
+        if(byteCheckFl &gt; 0) {
+            break;
+        }
+        if(intCounter == 13 &amp;&amp; intPrevCounter == 10)
+            byteCheckFl++;
+        intPrevCounter = intCounter;
+    }
+} catch(Exception e) {
+    if(!bREQ) {
+        continue;
+    }
+}
+
+pOutputStream.flush();
+pIutputStream = socketProxy.getInputStream();
+outputStream = socket.getOutputStream();
+try {
+    while( (intCounter = pIutputStream.read()) != -1) {
+        outputStream.write(intCounter);
+    }
+} catch(Exception e) {
+}
+outputStream.flush();
+</code></pre>
+
+<p>Make sure to close all the opened sockets and connections once the response is sent. Since this whole code is running in an infinite loop,
+the server will keep on waiting for the requests and sending the responses back. This is a crude implementation of the concept and there is
+room for a lot more improvements (like supporting SSL), but this should serve as a foundation to make the proxy a robust one.</p>
+
+<p>We can easily make this Java class as a Win32 service, so that it will always run in background and starts along with the OS.
+That will need some work with JNI. I will explain that in a later post.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/proxy/" rel="tag">Proxy</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/server/" rel="tag">Server</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -152,138 +275,12 @@ Compile the class and run the class. I tested this using JDK 1.6, but any JDK hi
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/serial-key-generation-and-validation-in-java/" rel="bookmark">Serial Key Generation and Validation in Java</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>In this post, I am going to show how to write a very basic serial key generation module for any Java based application - Same algorithms can be used for any programming language. The module consists of three parts.</p>
-
-<p><b><font color="red">WARNING:</font></b> Hash functions used in this article are obsolete and extremely vulnerable to attacks. For real-world implementations, select a more secure hash algorithm.</p>
-
-<ol>
-<li>Algorithm for Serial Generation</li>
-<li>Generating the Serial</li>
-<li>Validating the Serial</li>
-</ol>
-
-<h5 id="algorithm-for-serial-generation">Algorithm for Serial Generation</h5>
-
-<p>The following can be used as a simple algorithm for generating serial keys with 18 digits. In this method we are generating the serials based on the input the user gives, which can be the name of the user,
-company name etc. So most of the times the serial will be unique (based on the input). We get the name of the user as the input and generate the MD2, MD5 &amp; SHA1 hashes for the string and concatenate together.
-This will generate a total of 104 digits, since we need only 18 of them, we can use a set of pre defined numbers to select the 18 digits.</p>
-
-<p>The below figure explains the algorithm. I have selected some random numbers to pick the 18 digits from 104 character hash, you can use any number you like which makes the serial unique.</p>
-
-<p><img src="/media/images/00001/serial-key-generation-algorithm.png#floatcenter" alt="" /></p>
-
-<h5 id="generating-the-serial">Generating the Serial</h5>
-
-<p>To generate the serial, we need a input string and based on the input string we will be generating MD2, MD5 and SHA1 hashes. The method calculateSecurityHash takes the input string and the hashing method
-as input and generates the hash based on the method.</p>
-
-<pre><code class="java">String serialNumberEncoded = calculateSecurityHash(fullNameString,"MD2") +
-    calculateSecurityHash(fullNameString,"MD5") +
-        calculateSecurityHash(fullNameString,"SHA1");
-</code></pre>
-
-<p>Generating the Hash for the input string based on the type.</p>
-
-<pre><code class="java">private String calculateSecurityHash(String stringInput, String algorithmName)
-    throws java.security.NoSuchAlgorithmException {
-        String hexMessageEncode = "";
-        byte[] buffer = stringInput.getBytes();
-        java.security.MessageDigest messageDigest =
-            java.security.MessageDigest.getInstance(algorithmName);
-        messageDigest.update(buffer);
-        byte[] messageDigestBytes = messageDigest.digest();
-        for (int index=0; index &lt; messageDigestBytes.length ; index ++) {
-            int countEncode = messageDigestBytes[index] &amp; 0xff;
-            if (Integer.toHexString(countEncode).length() == 1)
-                hexMessageEncode = hexMessageEncode + "0";
-            hexMessageEncode = hexMessageEncode + Integer.toHexString(countEncode);
-        }
-        return hexMessageEncode;
-    }
-</code></pre>
-
-<p>Once all the three types of hashes are combined, we will have a total of 104 characters. Since we need only 18 for our serial key we can pick any random 18 digits from the combined hash.
-We cannot use random number generation to pick up the 18 digits since we need a valid exit strategy for validating the key.</p>
-
-<pre><code class="java">String serialNumber = ""
-    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
-    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + "-"
-    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
-    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
-    + serialNumberEncoded.charAt(98)  + "-"
-    + serialNumberEncoded.charAt(47)  + serialNumberEncoded.charAt(65)
-    + serialNumberEncoded.charAt(18)  + serialNumberEncoded.charAt(85) + "-"
-    + serialNumberEncoded.charAt(27)  + serialNumberEncoded.charAt(53)
-    + serialNumberEncoded.charAt(102) + serialNumberEncoded.charAt(15)
-    + serialNumberEncoded.charAt(99);
-</code></pre>
-
-<p>You can replace the numbers with anything between 0 and 103 so that the key is unique and based on the input string.</p>
-
-<h5 id="validating-the-serial">Validating the Serial</h5>
-
-<p>Now, whenever we get a user name and serial combination, we should be able to validate that. Since we already know the algorithm used to generate the serial, the validation part is pretty easier.
-We cannot follow the steps which we did while generating the serial in opposite direction because we will end up with a bunch of characters without any valid lead.
-Since we have the serial and user name to validate, we take the user name and generate the serial for the user name as per our algorithm. Once we have the serial number,
-we compare this against the serial which we got for validation, if both matches then we have a valid key.</p>
-
-<pre><code class="java">String serialNumberEncoded =
-    registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"MD2")
-    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"MD5")
-    + registrationAppSerialGenerationReversal.calculateSecurityHash(fullNameString,"SHA1");
-
-String serialNumberCalc = ""
-    + serialNumberEncoded.charAt(32)  + serialNumberEncoded.charAt(76)
-    + serialNumberEncoded.charAt(100) + serialNumberEncoded.charAt(50) + "-"
-    + serialNumberEncoded.charAt(2)   + serialNumberEncoded.charAt(91)
-    + serialNumberEncoded.charAt(73)  + serialNumberEncoded.charAt(72)
-    + serialNumberEncoded.charAt(98)  + "-" + serialNumberEncoded.charAt(47)
-    + serialNumberEncoded.charAt(65)  + serialNumberEncoded.charAt(18)
-    + serialNumberEncoded.charAt(85)  + "-" + serialNumberEncoded.charAt(27)
-    + serialNumberEncoded.charAt(53)  + serialNumberEncoded.charAt(102)
-    + serialNumberEncoded.charAt(15)  + serialNumberEncoded.charAt(99);
-
-if (serialNumber.equals(serialNumberCalc))
-    System.out.println("Serial MATCH");
-else
-    System.out.println("Serial MIS-MATCH");
-</code></pre>
-
-<p>Sample output from this program is demonstrated below.</p>
-
-<p><img src="/media/images/00001/serial-key-generation-output.jpg#floatcenter" alt="" /></p>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/serial-key/" rel="tag">Serial Key</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/core-java/" rel="tag">Core Java</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
 	<a class="pagination__item pagination__item--prev" href="/page/4/">«</a>
-	<span class="pagination__item pagination__item--current">5/5</span>
+	<span class="pagination__item pagination__item--current">5/6</span>
+	<a class="pagination__item pagination__item--next" href="/page/6/">»</a>
 </div>
 
 	</div>
@@ -314,10 +311,10 @@ else
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
 		</ul>
 	</div>
 </div>
@@ -341,8 +338,8 @@ else
 	<h4 class="widget__title">Tags</h4>
 	<div class="widget__content">
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
@@ -350,12 +347,12 @@ else
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
@@ -363,9 +360,9 @@ else
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
@@ -378,9 +375,10 @@ else
 	<h4 class="widget__title">Links</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
-			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
 		</ul>
 	</div>
 </div>

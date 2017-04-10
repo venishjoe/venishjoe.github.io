@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-10-26T11:45:00&#43;00:00"/>
+<meta property="og:updated_time" content="2009-11-08T18:01:00&#43;00:00"/>
 
 
 
@@ -57,6 +57,133 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Java</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/java-string-concatenation-and-performance/" rel="bookmark">Java String Concatenation and Performance</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>The quick and dirty way to concatenate strings in Java is to use the concatenation operator (+).
+This will yield a reasonable performance if you need to combine two or three strings (fixed-size).
+But if you want to concatenate n strings in a loop, the performance degrades in multiples of n.
+Given that String is immutable, for large number of string concatenation operations, using (+) will give us a worst performance.
+But how bad ? How StringBuffer, StringBuilder or String.concat() performs if we put them on a performance test ?.
+This article will try to answer those questions.</p>
+
+<p>We will be using <a href="https://github.com/perf4j/perf4j">Perf4J</a> to calculate the performance, since this library will give us aggregated performance statistics
+like mean, minimum, maximum, standard deviation over a set time span. In the code, we will concatenate a string (*)
+repeatedly 50,000 times and this iteration will be performed 21 times so that we can get a good standard deviation.
+The following methods will be used to concatenate strings.</p>
+
+<ul>
+<li>Concatenation Operator (+)</li>
+<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/String.html#concat%28java.lang.String%29">String concat method</a> - concat(String str)</li>
+<li><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/StringBuffer.html#append%28java.lang.String%29">StringBuffer append method</a> - append(String str)</li>
+<li><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/StringBuilder.html#append%28java.lang.String%29">StringBuilder append method</a> - append(String str)</li>
+</ul>
+
+<p>And finally we will look at the byte code to see how each of these operations perform. Let’s start building the class.
+Note that each of the block in the code should be wrapped around the Perf4J library to calculate the performance in each iteration.
+Let’s define the outer and inner iterations first.</p>
+
+<pre><code class="java">private static final int OUTER_ITERATION=20;
+private static final int INNER_ITERATION=50000;
+</code></pre>
+
+<p>Now let’s implement each of the four methods mentioned in the article.
+Nothing fancy here, plain implementations of (+), String.concat(), StringBuffer.append() &amp; StringBuilder.append().</p>
+
+<pre><code class="java">String addTestStr = "";
+String concatTestStr = "";
+StringBuffer concatTestSb = null;
+StringBuilder concatTestSbu = null;
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringAddConcat");
+    addTestStr = "";
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        addTestStr += "*";
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringConcat");
+    concatTestStr = "";
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestStr = concatTestStr.concat("*");
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringBufferConcat");
+    concatTestSb = new StringBuffer();
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestSb.append("*");
+    stopWatch.stop();
+}
+
+for (int outerIndex=0;outerIndex&lt;=OUTER_ITERATION;outerIndex++) {
+    StopWatch stopWatch = new LoggingStopWatch("StringBuilderConcat");
+    concatTestSbu = new StringBuilder();
+    for (int innerIndex=0;innerIndex&lt;=INNER_ITERATION;innerIndex++)
+        concatTestSbu.append("*");
+    stopWatch.stop();
+}
+</code></pre>
+
+<p>Let’s run this program and generate the performance metrics. I ran this program in a 64-bit OS (Windows 7), 32-bit JVM (7-ea), Core 2 Quad CPU (2.00 GHz) with 4 GB RAM.</p>
+
+<p>The output from the 21 iterations of the program is plotted below.</p>
+
+<p><img src="/media/images/00009/java-string-concatenation-and-performance.png#floatcenter" alt="" /></p>
+
+<p>Well, the results are pretty conclusive and as expected. One interesting point to notice is how better String.concat performs.
+We all know String is immutable, then how the performance of concat is better. To answer the question we should look at the byte code.
+I have included the whole byte code in the download package, but let’s have a look at the below snippet.</p>
+
+<pre><code class="bytecode">45: new #7; //class java/lang/StringBuilder
+48: dup
+49: invokespecial #8; //Method java/lang/StringBuilder."&lt;init&gt;":()V
+52: aload_1
+53: invokevirtual #9; //Method java/lang/StringBuilder.append:
+    (Ljava/lang/String;)Ljava/lang/StringBuilder;
+56: ldc #10; //String *
+58: invokevirtual #9; //Method java/lang/StringBuilder.append:
+    (Ljava/lang/String;)Ljava/lang/StringBuilder;
+61: invokevirtual #11; //Method java/lang/StringBuilder.toString:()
+    Ljava/lang/String;
+64: astore_1
+</code></pre>
+
+<p>This is the byte code for String.concat(), and its clear from this that the String.concat is using StringBuilder for concatenation and the performance should be as good as String Builder.
+But given that the source object being used is String, we do have some performance loss in String.concat.</p>
+
+<p>So for the simple operations we should use String.concat compared to (+), if we don’t want to create a new instance of StringBuffer/Builder.
+But for huge operations, we shouldn’t be using the concat operator, as seen in the performance results it will bring down the application to its knees and spike up the CPU utilization.
+To have the best performance, the clear choice is StringBuilder as long as you do not need thread-safety or synchronization.</p>
+
+<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/string-concatenation-perf">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/performance/" rel="tag">Performance</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/bytecode/" rel="tag">Bytecode</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/core-java/" rel="tag">Core Java</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -184,161 +311,11 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/dynamically-load-compiled-java-class/" rel="bookmark">Dynamically Load Compiled Java Class as a Byte Array and Execute</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>As we know, all the compiled java classes runs inside the JVM. The default class loader from Sun loads the classes into JVM and executes it.
-This class loader is a part of JVM which loads the compiled byte code to memory. In this article,
-I will show how to convert a compiled java class to a array of bytes and then load these array of bytes into another class
-(which can be over the network) and execute the array of bytes.</p>
-
-<p>So the question arises, why should we write a custom class loader ? There are some distinct advantages. Some of them below</p>
-
-<ul>
-<li>We can load a class over any network protocol. Since the java class can be converted to a series of numbers (array of bytes), we can use most of the protocols.</li>
-<li>Load Dynamic classes based on the type of user, especially useful when you want to validate the license of your software over the web and if you are paranoid about the security.</li>
-<li>More flexible and secure, you can encrypt the byte stream (asymmetric or symmetric) ensuring safer delivery.</li>
-</ul>
-
-<p>For this article we will be creating three classes</p>
-
-<ol>
-<li>JavaClassLoader – The custom class loader which will load the array of bytes and execute. In other words, the client program.</li>
-<li>Class2Byte – The Java class which converts any compiled class / object to a array of bytes</li>
-<li>ClassLoaderInput – The class which will be converted to array of bytes and transferred</li>
-</ol>
-
-<p>Let’s divide this article into two sections, in the fist section we will convert the java class to array of bytes and in the second section, we will load that array.</p>
-
-<h5 id="create-convert-the-java-class-to-array-of-bytes">Create &amp; Convert the Java class to array of bytes</h5>
-
-<p>Let’s write a simple class (ClassLoaderInput) which just prints a line. This is the class which will be converted to a byte array.</p>
-
-<pre><code class="java">public class ClassLoaderInput {
-    public void printString() {
-        System.out.println("Hello World!");
-    }
-}
-</code></pre>
-
-<p>Now, let’s write another class (Class2Byte) which will convert the ClassLoaderInput to a byte of array.
-The concept to convert the file is simple, compile the above file and load the class file through input stream and with an offset
-read and convert the class to bytes and write the output in to another out stream.
-We need these bytes as a comma separated value, so we will use StringBuffer to add comma between the bytes.</p>
-
-<pre><code class="java">int _offset=0;
-int _read=0;
-
-File fileName = new File(args [0]);
-InputStream fileInputStream = new FileInputStream(fileName);
-FileOutputStream fileOutputStream = new FileOutputStream(args[1]);
-PrintStream printStream = new PrintStream(fileOutputStream);
-StringBuffer bytesStringBuffer = new StringBuffer();
-
-byte[] byteArray = new byte[(int)fileName.length()];
-while (_offset &lt; byteArray.length &amp;&amp;
-    (_read=fileInputStream.read(byteArray, _offset,
-    byteArray.length-_offset)) &gt;= 0)
-        _offset += _read;
-
-fileInputStream.close();
-for (int index = 0; index &lt; byteArray.length; index++)
-    bytesStringBuffer.append(byteArray[index]+",");
-
-printStream.print(bytesStringBuffer.length()==0 ? "" :
-    bytesStringBuffer.substring(0, bytesStringBuffer.length()-1));
-</code></pre>
-
-<p>Now let’s run this file and generate the output. A sample output from my machine is below.</p>
-
-<p><img src="/media/images/00007/dynamically-load-compiled-java-class-output.png#floatcenter" alt="" /></p>
-
-<p>Now,we have the sample class (ClassLoaderInput) file as a bunch of numbers. Now this bunch of numbers can be transferred over any protocol to our
-custom class loader which will “reconstruct” the class from these bytes and run it,
-without any physical trace in the client machine (the array of bytes will be on memory).</p>
-
-<h5 id="load-the-array-of-bytes-and-execute">Load the array of bytes and execute</h5>
-
-<p>Now, to the important part of this article, we are going to write a custom class loader which will load those bunch of numbers (array) and execute them.
-The array of bytes can be transferred over the network but in this example, we will define it as a string in the class loader for demonstration purpose.</p>
-
-<p>Let’s start by defining the array of bytes.</p>
-
-<pre><code class="java">private int[] data = {-54,-2,-70,-66,0,0,0,51,0,31,10,0,6,0,17,9,0,18,0,19,8,
-    0,20,10,0,21,0,22,7,0,23,7,0,24,1,0,6,60,105,110,105,116,62,1,0,3,40,41,86,1,
-    0,4,67,111,100,101,1,0,15,76,105,110,101,78,117,109,98,101,114,84,97,98,108,
-    101,1,0,18,76,111,99,97,108,86,97,114,105,97,98,108,101,84,97,98,108,101,1,0,
-    4,116,104,105,115,1,0,18,76,67,108,97,115,115,76,111,97,100,101,114,73,110,
-    112,117,116,59,1,0,11,112,114,105,110,116,83,116,114,105,110,103,1,0,10,83,
-    111,117,114,99,101,70,105,108,101,1,0,21,67,108,97,115,115,76,111,97,100,101,
-    114,73,110,112,117,116,46,106,97,118,97,12,0,7,0,8,7,0,25,12,0,26,0,27,1,0,
-    12,72,101,108,108,111,32,87,111,114,108,100,33,7,0,28,12,0,29,0,30,1,0,16,67,
-    108,97,115,115,76,111,97,100,101,114,73,110,112,117,116,1,0,16,106,97,118,97,
-    47,108,97,110,103,47,79,98,106,101,99,116,1,0,16,106,97,118,97,47,108,97,110,
-    103,47,83,121,115,116,101,109,1,0,3,111,117,116,1,0,21,76,106,97,118,97,47,105,
-    111,47,80,114,105,110,116,83,116,114,101,97,109,59,1,0,19,106,97,118,97,47,105,
-    111,47,80,114,105,110,116,83,116,114,101,97,109,1,0,7,112,114,105,110,116,108,
-    110,1,0,21,40,76,106,97,118,97,47,108,97,110,103,47,83,116,114,105,110,103,59,
-    41,86,0,33,0,5,0,6,0,0,0,0,0,2,0,1,0,7,0,8,0,1,0,9,0,0,0,47,0,1,0,1,0,0,0,5,42,
-    -73,0,1,-79,0,0,0,2,0,10,0,0,0,6,0,1,0,0,0,1,0,11,0,0,0,12,0,1,0,0,0,5,0,12,0,
-    13,0,0,0,1,0,14,0,8,0,1,0,9,0,0,0,55,0,2,0,1,0,0,0,9,-78,0,2,18,3,-74,0,4,-79,
-    0,0,0,2,0,10,0,0,0,10,0,2,0,0,0,3,0,8,0,4,0,11,0,0,0,12,0,1,0,0,0,9,0,12,0,13,
-    0,0,0,1,0,15,0,0,0,2,0,16};
-</code></pre>
-
-<p>The conversion of these bytes to class is done by the <a href="http://java.sun.com/j2se/1.3/docs/api/java/lang/ClassLoader.html#defineClass%28byte[],%20int,%20int%29">ClassLoader.defineClass()</a>
-method We should supply the stream of bytes that make up the class data.
-The bytes in positions off through off+len-1 should have the format of a valid class file as defined by the <a href="http://java.sun.com/docs/books/vmspec/">Java Virtual Machine Specification</a>.
-The offset and length will be the additional parameters. Once the defineClass converts the array to class,
-then we can use reflection to execute the methods in the class.</p>
-
-<pre><code class="java">JavaClassLoader _classLoader = new JavaClassLoader();
-byte[] rawBytes = new byte[_classLoader.data.length];
-for (int index = 0; index &lt; rawBytes.length; index++)
-    rawBytes[index] = (byte) _classLoader.data[index];
-Class regeneratedClass = _classLoader.defineClass(args[0],
-    rawBytes, 0, rawBytes.length);
-regeneratedClass.getMethod(args[1], null).invoke(null, new Object[] { args });
-</code></pre>
-
-<p>Now, let’s compile the class loader and run. The the class file name &amp; method name should be passed as a run time argument.
-If you have done everything right, you should see the output from the input class which we created (ClassLoaderInput) initially.
-Sample output from my machine below.</p>
-
-<p><img src="/media/images/00007/dynamically-load-compiled-java-class-output-patched.png#floatcenter" alt="" /></p>
-
-<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/dynamic-byte-class-array">my github</a> page.</p>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/network/" rel="tag">Network</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/jvm/" rel="tag">JVM</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/classloader/" rel="tag">ClassLoader</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
 	<a class="pagination__item pagination__item--prev" href="/tags/java/">«</a>
-	<span class="pagination__item pagination__item--current">2/5</span>
+	<span class="pagination__item pagination__item--current">2/6</span>
 	<a class="pagination__item pagination__item--next" href="/tags/java/page/3/">»</a>
 </div>
 
@@ -370,10 +347,10 @@ Sample output from my machine below.</p>
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array and Execute</a></li>
 		</ul>
 	</div>
 </div>
@@ -397,8 +374,8 @@ Sample output from my machine below.</p>
 	<h4 class="widget__title">Tags</h4>
 	<div class="widget__content">
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
@@ -406,12 +383,12 @@ Sample output from my machine below.</p>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (10)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
@@ -419,9 +396,9 @@ Sample output from my machine below.</p>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
-		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (5)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
@@ -434,9 +411,10 @@ Sample output from my machine below.</p>
 	<h4 class="widget__title">Links</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
-			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub Source</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/blog-code">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
-			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr Photostream</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
 		</ul>
 	</div>
 </div>
