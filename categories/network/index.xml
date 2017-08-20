@@ -2,14 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Network on VENISHJOE.NET</title>
-    <link>https://venishjoe.net/categories/network/index.xml</link>
+    <link>https://venishjoe.net/categories/network/</link>
     <description>Recent content in Network on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="https://venishjoe.net/categories/network/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 13 Oct 2009 22:45:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://venishjoe.net/categories/network/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Signing Java Objects for Secure Transfer</title>

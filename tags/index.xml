@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on VENISHJOE.NET</title>
+    <link>https://venishjoe.net/tags/</link>
+    <description>Recent content in Tags on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <lastBuildDate>Sun, 20 Sep 2009 17:24:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://venishjoe.net/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>3des</title>
+      <link>https://venishjoe.net/tags/3des/</link>
+      <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/3des/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Bytecode</title>
+      <link>https://venishjoe.net/tags/bytecode/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/bytecode/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Classloader</title>
+      <link>https://venishjoe.net/tags/classloader/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/classloader/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Core Java</title>
+      <link>https://venishjoe.net/tags/core-java/</link>
+      <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/core-java/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Database</title>
+      <link>https://venishjoe.net/tags/database/</link>
+      <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/database/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Encryption</title>
+      <link>https://venishjoe.net/tags/encryption/</link>
+      <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/encryption/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Errors</title>
+      <link>https://venishjoe.net/tags/errors/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/errors/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Exceptions</title>
+      <link>https://venishjoe.net/tags/exceptions/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/exceptions/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Geronimo</title>
+      <link>https://venishjoe.net/tags/geronimo/</link>
+      <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/geronimo/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>J2ee</title>
+      <link>https://venishjoe.net/tags/j2ee/</link>
+      <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/j2ee/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Java</title>
+      <link>https://venishjoe.net/tags/java/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/java/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Java Ea</title>
+      <link>https://venishjoe.net/tags/java-ea/</link>
+      <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/java-ea/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jdk7</title>
+      <link>https://venishjoe.net/tags/jdk7/</link>
+      <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/jdk7/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jsp</title>
+      <link>https://venishjoe.net/tags/jsp/</link>
+      <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/jsp/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jsr</title>
+      <link>https://venishjoe.net/tags/jsr/</link>
+      <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/jsr/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Jvm</title>
+      <link>https://venishjoe.net/tags/jvm/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/jvm/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Memory</title>
+      <link>https://venishjoe.net/tags/memory/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/memory/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Network</title>
+      <link>https://venishjoe.net/tags/network/</link>
+      <pubDate>Wed, 21 Oct 2009 21:20:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/network/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Nio.2</title>
+      <link>https://venishjoe.net/tags/nio.2/</link>
+      <pubDate>Mon, 26 Oct 2009 11:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/nio.2/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Outofmemory</title>
+      <link>https://venishjoe.net/tags/outofmemory/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/outofmemory/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Password Recovery</title>
+      <link>https://venishjoe.net/tags/password-recovery/</link>
+      <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/password-recovery/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Performance</title>
+      <link>https://venishjoe.net/tags/performance/</link>
+      <pubDate>Sun, 08 Nov 2009 18:01:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/performance/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Proxy</title>
+      <link>https://venishjoe.net/tags/proxy/</link>
+      <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/proxy/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Reverse Engineering</title>
+      <link>https://venishjoe.net/tags/reverse-engineering/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/reverse-engineering/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Rsa</title>
+      <link>https://venishjoe.net/tags/rsa/</link>
+      <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/rsa/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Security</title>
+      <link>https://venishjoe.net/tags/security/</link>
+      <pubDate>Sun, 09 Apr 2017 01:40:22 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/security/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Serial Key</title>
+      <link>https://venishjoe.net/tags/serial-key/</link>
+      <pubDate>Mon, 31 Aug 2009 23:54:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/serial-key/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Server</title>
+      <link>https://venishjoe.net/tags/server/</link>
+      <pubDate>Sun, 27 Sep 2009 00:55:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/server/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Sign</title>
+      <link>https://venishjoe.net/tags/sign/</link>
+      <pubDate>Tue, 13 Oct 2009 22:45:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/sign/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Struts</title>
+      <link>https://venishjoe.net/tags/struts/</link>
+      <pubDate>Sun, 18 Apr 2010 21:41:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/struts/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>System</title>
+      <link>https://venishjoe.net/tags/system/</link>
+      <pubDate>Sun, 11 Oct 2009 01:15:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/system/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Weblogic</title>
+      <link>https://venishjoe.net/tags/weblogic/</link>
+      <pubDate>Sun, 20 Sep 2009 17:24:00 +0000</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/tags/weblogic/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

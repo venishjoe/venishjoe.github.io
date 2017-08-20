@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>VENISHJOE.NET</title>
-    <link>https://venishjoe.net/index.xml</link>
+    <link>https://venishjoe.net/</link>
     <description>Recent content on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
@@ -10,7 +10,9 @@
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
     <lastBuildDate>Sun, 09 Apr 2017 01:40:22 -0500</lastBuildDate>
-    <atom:link href="https://venishjoe.net/index.xml" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="https://venishjoe.net/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Java Bytecode Manipulation</title>

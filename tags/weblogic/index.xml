@@ -2,14 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Weblogic on VENISHJOE.NET</title>
-    <link>https://venishjoe.net/tags/weblogic/index.xml</link>
+    <link>https://venishjoe.net/tags/weblogic/</link>
     <description>Recent content in Weblogic on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="https://venishjoe.net/tags/weblogic/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 20 Sep 2009 17:24:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://venishjoe.net/tags/weblogic/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Recover Database Passwords from Weblogic Server</title>

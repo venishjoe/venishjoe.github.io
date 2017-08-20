@@ -2,14 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Errors on VENISHJOE.NET</title>
-    <link>https://venishjoe.net/tags/errors/index.xml</link>
+    <link>https://venishjoe.net/tags/errors/</link>
     <description>Recent content in Errors on VENISHJOE.NET</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
     <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
     <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
-    <atom:link href="https://venishjoe.net/tags/errors/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 11 Oct 2009 01:15:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://venishjoe.net/tags/errors/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Recover from Out of Memory Errors in Java</title>
