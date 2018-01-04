@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-11-08T18:01:00&#43;00:00"/>
+<meta property="og:updated_time" content="2010-04-18T21:41:00&#43;00:00"/>
 
 
 
@@ -57,6 +57,184 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Programming</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/dynamic-columns-in-jsp-model-with-struts/" rel="bookmark">Dynamic Columns in JSP Model with Struts Framework</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>While developing web applications, we will come across a lot of scenarios where we should use dynamic columns depending on the entitlement of the user or
+from the result set depending on the data itself. Dynamic columns in web applications give control to the user on what he wants to see
+(specially when we have a huge amount of data to work with). For applications with sensitive data,
+this can be even extended to act as a security layer where the access to specific data can be controlled with high precision.</p>
+
+<p>In this article, I will explain one of the methods to implement this in any J2EE application with little or no code change.</p>
+
+<h5 id="high-level-architecture">High Level Architecture</h5>
+
+<p><img src="/media/images/00010/dynamic-columns-in-jsp-model-with-struts.png#floatcenter" alt="" /></p>
+
+<p>In a nut shell, this design uses the Application Context of the container to maintain the values pertaining to a particular user,
+if the requirement demands not to maintain the preference after a user session is terminated, then it can be achieved by destroying the object stored in the context.</p>
+
+<p>We will start by creating a singleton class, which will be used to store the user preference about the columns.
+The user preference object can be mapped  against the user id or any other primary key, so that different preferences are maintained for different users.
+While the container starts, the instance for the singleton will be created. The default preferences can be loaded from a property / xml file or from a data store (DB).
+This object will contain the preferences of different pages with the different key names so that the same object can be used to maintain the preference across the application.
+This will be read during the logon operation and if the object in the application context doesn&rsquo;t contain any values
+(if the user logs in for the first time or in an application where the preference is specific to the session) then the default values are loaded. Once the page loads,
+the preference can be read from the application context and can be  presented to the user. If the user edits his preferences, it will be updated in the application context.
+Note that the application context is not persistent between container restarts, so appropriate mechanisms should be taken to store the data.</p>
+
+<h5 id="implementation">Implementation</h5>
+
+<p>Let’s go through the implementation now. The following steps describe how to integrate this component to an existing Struts application.</p>
+
+<h6 id="start-up-servlet-and-initializing-the-singleton-class">Start-up servlet and initializing the Singleton Class</h6>
+
+<p>Create an Initializer Servlet and make an entry for the same in the web.xml file so that the Servlet starts when the container is initialized.
+Make sure the load-on-startup is set to 1, which ensures that the application server loads the servlet while startup.</p>
+
+<pre><code class="xmls">&lt;servlet&gt;
+    &lt;servlet-name&gt; InitializerServlet &lt;/servlet-name&gt;
+    &lt;servlet-class&gt;com.startup.common.InitializerServlet&lt;/servlet-class&gt;
+    &lt;load-on-startup&gt; 1 &lt;/load-on-startup&gt;
+&lt;/servlet&gt;
+</code></pre>
+
+<p>Next, create a Singleton class, which contains getter and setter methods for dynamic column preference, the object can be any collection,
+we are using Hash Map in this example which will be used to store the primary key against the list containing the preference.
+The set &amp; get methods in the Singleton should be synchronized so that the simultaneous access is restricted. Also override the clone() method in your singleton.</p>
+
+<pre><code class="java">public class AppSingleton implements Serializable {
+    private Hashtable cusomizeViewValues = null;
+    private static AppSingleton appSingleton = null;
+
+    private AppSingleton (){ }
+
+    public synchronized void setCusomizeViewValues (Hashtable cusomizeViewValues){
+        this.cusomizeViewValues = cusomizeViewValues;
+    }
+
+    public static synchronized AppSingleton getInstance () throws Exception {
+        try {
+            if (appSingleton == null)
+                return new AppSingleton ();
+          } catch (Exception e) {
+            throw new Exception();
+        }
+    }
+
+    public Object clone() throws CloneNotSupportedException{
+        throw new CloneNotSupportedException();
+    }
+}
+</code></pre>
+
+<p>In the startup servlet, create an instance of the singleton class. When created, the object will be available in the application context of the container,
+and no one will be able to create another instance, until the object created in startup is destroyed.
+Since we have overridden the clone method, no one will be able to clone the particular object.
+These measures are to ensure the integrity of the user preference stored in the singleton.
+A sample Initializer servlet will look like the following code.</p>
+
+<pre><code class="java">public class InitializerServlet extends HttpServlet {
+    public void init () throws ServletException {
+        AppSingleton appSingleton = AppSingleton.getInstance ();
+    }
+
+    public void destroy (){}
+    public void service (HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {}
+}
+</code></pre>
+
+<p>Now, create a Data Transfer Object (DTO) / Value Object (VO) for storing the values.
+The VO/DTO will contain just two getters and setters, one for the Column Display name and the other for the bean property. This will be a POJO.</p>
+
+<h6 id="populate-the-application-context">Populate the Application context</h6>
+
+<p>When the container starts, populate the list in the application context, from the property file or from the data source.
+If you are having a separate page to choose the columns displayed, you can use the same list to render the values initially.
+Similarly if the user has changed his preference then update the application context accordingly.
+This can be done during the Login Action, once the user is authorized and authenticated.
+You can use your own logic to get all the user preference and then update list with DTO’s/VO’s containing the display name and the property name.
+This list is updated in the application context against the primary key.
+Before updating the application context check if the PK is already present in the Hash Table if yes, update or create a new entry.</p>
+
+<p>A sample property file will look like the one given below. By using different keys, we can have entries for different pages.
+Also the columns to be displayed to the user irrespective of the individual preference can also be marked here under a different key.
+The columns users are not allowed to modify are added to the rendering list once the request is got from the particular page and not during the logon time.
+The values are appended to the modifiable columns list and rendered to the user.</p>
+
+<pre><code class="properties">Validations$Optional=Plan #, Plan Name, Administrator
+Validations$Core= Plan Val Description, Plan Val Status
+
+# Optional represents the Columns users can modify
+# Core represents the Columns users can’t modify
+
+Validations$Plan#=strClientExtEntityId
+Validations$PlanName=strPlanName
+Validations$Administrator=strAdministrator
+Validations$PlanValDescription=strDescription
+Validations$PlanValStatus=strStatus
+</code></pre>
+
+<h6 id="rendering-logic">Rendering Logic</h6>
+
+<p>Once the values are available in the session, using JSP, logic iterate, render the Column names.
+Then to display the values from the result set, use the logic iterate with the list containing the values for the page,
+which is used to render the &lt;tr&gt; tag and inside that logic iterate, use another logic iterate,
+which is used to render the columns and use a bean define tag to get the column name properties in a scriplet variable and then use a bean define tag to display the value of the property.
+This logic is highly dynamic.</p>
+
+<p>To display the column names,</p>
+
+<pre><code class="jsp">&lt;logic:iterate name="&lt;Form Bean Name&gt;" id="testId" property="&lt;Name of the List&gt;" &gt;
+    &lt;td&gt;
+        &lt;bean:write name=" testId " property="&lt;Col Disp Name&gt;"/&gt;
+    &lt;/td&gt;
+&lt;/logic:iterate&gt;
+</code></pre>
+
+<p>To display the result set,</p>
+
+<pre><code class="jsp">&lt;logic:iterate name="&lt;Form Name&gt;" id="outerId" property="&lt;Property of the Hitlist&gt;"&gt;
+    &lt;tr&gt;
+        &lt;logic:iterate name="&lt;Form Name&gt;" id="innerId" property="&lt;Name of the List&gt;" &gt;
+        &lt;bean:define name="innerId" id="propId" property="&lt;Col Property&gt;" type="String"/&gt;
+            &lt;td&gt;
+                &lt;bean:write name="outerId" property="&lt;%= propId %&gt;" /&gt;
+            &lt;/td&gt;
+        &lt;/logic:iterate&gt;
+    &lt;/tr&gt;
+&lt;/logic:iterate&gt;
+</code></pre>
+
+<p>We also will have situations to display hyperlinks, textboxes etc. in the result set, the same logic can be used to display the different objects in the JSP.
+Just before the bean write tag, have a logic equal tag to check for specific types and render the display.</p>
+
+<p>This architecture is highly customizable and can be easily plugged in into any existing J2EE application. Also this can be easily enhanced to incorporate new functionalities.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/j2ee/" rel="tag">J2EE</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/struts/" rel="tag">Struts</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jsp/" rel="tag">JSP</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -184,133 +362,6 @@ To have the best performance, the clear choice is StringBuilder as long as you d
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/recursive-file-tree-traversing-in-java-using-nio/" rel="bookmark">Recursive File Tree Traversing in Java using NIO.2</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>In my <a href="/post/monitor-a-directory-for-changes-using-java/">previous article about NIO.2</a>,
-we have seen how to implement a service which monitors a directory recursively for any changes.
-In this article we will look at another improvement in JDK7 (NIO.2) called FileWatcher.
-This will allow us to implement a search or index. For example, we can find all the $some_pattern$ files in a given directory recursively and (or)
-delete / copy all the all the $some_pattern$ files in a file system.
-In a nutshell FileWatcher will get us a list of files from a file system based on a pattern which can be processed based on our requirement.</p>
-
-<p>The FileVistor is an interface and our class should implement it.
-We have two methods before the traversal starts at the directory level &amp; file level, and one method after the traversal is complete,
-which can be used for clean up or post processing. The important points from the interface is given in the below diagram.</p>
-
-<p><img src="/media/images/00008/recursive-file-tree-traversing-class-diagram.png#floatcenter" alt="" /></p>
-
-<p>While I think FileVistor is the best way to handle this, JDK7 NIO.2 has given another option to achieve the same, a class named SimpleFileVistor (which implements FileVisitor).
-It should be self explanatory, a simplified version of FileVisitor.
-We can extend the SimpileFileVisitor into our class and then traverse the directory with overriding only the methods we need, and if any step fails we will get an IOException.</p>
-
-<p>According to me, FileVisitor is better because it forces you to implement the methods (sure, you can leave them blank)
-since these methods are really important if you plan to implement recursive delete / copy or work with symbolic links.
-For example, if you are copying some files to a directory you should make sure that the directory should be created
-first before copying which can be done in the preVisitDirectory().</p>
-
-<p>The other area of concern is symbolic links and how this will be handled by FileVisitor. This can be achieved using FileVisitOption enums.
-By default, the symbolic links are not followed so that we are not accidentally deleting any directories in a recursive delete.
-If you want to handle manually, there are two options FOLLOW_LINKS (follow the links) &amp; DETECT_CYCLES (catch circular references).</p>
-
-<p>If you want to exclude some directory from FileVisitor or if you are looking for a directory or a file in the file system and once you find it
-you want to stop searching that can be implemented by using the return type of FileVisitor, called FileVisitResult.
-SKIP_SUBTREE allows us to skip directories &amp; subdirectories. TERMINATE stops the traversing.</p>
-
-<p>The search can be initiated by the walkFileTree() method in Files class. This will take the starting directory (or root directory in your search) as a parameter.
-You can also define Integer.MAX_VALUE if you want to manually specify the depth.
-And as mentioned in the above diagram, define FileVisitOption for symbolic links if needed.</p>
-
-<p>Enough with the API description, let&rsquo;s write some sample code to implement what we discussed.
-We will be using the SimpleFileVisitor so that in our demo we don’t need to implement all the methods.</p>
-
-<p>Let’s start with defining the pattern which needs to be searched for. In this example,
-we will search for all the *txt file / directory names recursively in any given directory.
-This can be done with getPathMatcher() in FileSystems</p>
-
-<pre><code class="java">PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + "*txt*");
-</code></pre>
-
-<p>Now, let’s initiate the search by calling walkFileTree() as mentioned below. We are not defining anything specific for symbolic links so, by default its NO_FOLLOW.</p>
-
-<pre><code class="java">Files.walkFileTree(Paths.get("D://Search"), fileVisitor);
-</code></pre>
-
-<p>Let’s go through the implementations of class SimpleFileVisitor, we will be overriding only visitFile() &amp; preVisitDirectory() in this example,
-but its a good practice to override all the five methods so that we have more control over the search. The implementation is pretty simple,
-based on the pattern the below methods will search for a directory or file and print the path.</p>
-
-<pre><code class="java">@Override
-public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
-    if (filePath.getName() != null &amp;&amp; pathMatcher.matches(filePath.getName()))
-        System.out.println("FILE: " + filePath);
-    return FileVisitResult.CONTINUE;
-}
-
-@Override
-public FileVisitResult preVisitDirectory(Path directoryPath) {
-    if (directoryPath.getName() != null &amp;&amp; pathMatcher.matches(directoryPath.getName()))
-        System.out.println("DIR: " + directoryPath);
-    return FileVisitResult.CONTINUE;
-}
-</code></pre>
-
-<p>Once this is completed, we can use the postVisitDirectory() to perform additional tasks or any cleanup if needed. A sample output from my machine is given below.</p>
-
-<p><img src="/media/images/00008/recursive-file-tree-traversing-output.png#floatcenter" alt="" /></p>
-
-<p>The complete source code is given below. Please note that you need JDK7 to run this code.
-Source is also available in <a href="https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2_file-visitor">my github</a> page.</p>
-
-<pre><code class="java">public class NIO2_FileVisitor extends SimpleFileVisitor&lt;Path&gt; {
-    private PathMatcher pathMatcher;
-
-    @Override
-    public FileVisitResult visitFile(Path filePath, BasicFileAttributes basicFileAttributes) {
-        if (filePath.getName() != null &amp;&amp; pathMatcher.matches(filePath.getName()))
-                System.out.println("FILE: " + filePath);
-        return FileVisitResult.CONTINUE;
-    }
-
-    @Override
-    public FileVisitResult preVisitDirectory(Path directoryPath) {
-        if (directoryPath.getName() != null &amp;&amp; pathMatcher.matches(directoryPath.getName()))
-                System.out.println("DIR: " + directoryPath);
-        return FileVisitResult.CONTINUE;
-    }
-
-    public static void main(String[] args) throws IOException {
-        NIO2_FileVisitor fileVisitor = new NIO2_FileVisitor();
-        fileVisitor.pathMatcher = FileSystems.getDefault().getPathMatcher("glob:" + "*txt*");
-        Files.walkFileTree(Paths.get("D://Search"), fileVisitor);
-    }
-}
-</code></pre>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/jdk7/" rel="tag">JDK7</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/jsr/" rel="tag">JSR</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/nio.2/" rel="tag">NIO.2</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/java-ea/" rel="tag">Java EA</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
@@ -337,6 +388,7 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 	<h4 class="widget__title">Popular Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
 		</ul>
@@ -347,10 +399,10 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
 		</ul>
 	</div>
 </div>
@@ -360,12 +412,14 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 	<div class="widget__content">
 		<ul class="widget__list">
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/maps/gis">Maps/Gis</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/network">Network</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/performance">Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/programming">Programming</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/reverse-engineering">Reverse-Engineering</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/security">Security</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/system">System</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/utilities">Utilities</a></li>
 		</ul>
 	</div>
 </div>
@@ -381,7 +435,13 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/errors" title="errors">errors (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geocode" title="geocode">geocode (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/go" title="go">go (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/golang" title="golang">golang (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-api" title="google-api">google-api (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-maps" title="google-maps">google-maps (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/heatmap" title="heatmap">heatmap (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
@@ -389,12 +449,14 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/map" title="map">map (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/places-visited" title="places-visited">places-visited (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
@@ -431,7 +493,7 @@ Source is also available in <a href="https://github.com/venishjoe/blog-code/tree
 	</div>
 		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
 			<div class="container container-inner">
-				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+				<p class="footer__copyright">&copy; 2018 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
 			</div>
 		</footer>
 	</div>

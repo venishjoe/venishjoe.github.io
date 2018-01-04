@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Utilities on VENISHJOE.NET</title>
+    <link>https://venishjoe.net/categories/utilities/</link>
+    <description>Recent content in Utilities on VENISHJOE.NET</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>venish@venishjoe.net (Venish Joe Clarence)</managingEditor>
+    <webMaster>venish@venishjoe.net (Venish Joe Clarence)</webMaster>
+    <copyright>This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 03 Jan 2018 10:00:00 -0500</lastBuildDate>
+    
+	<atom:link href="https://venishjoe.net/categories/utilities/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Places Visited Heatmap</title>
+      <link>https://venishjoe.net/post/places-visited-heatmap/</link>
+      <pubDate>Wed, 03 Jan 2018 10:00:00 -0500</pubDate>
+      <author>venish@venishjoe.net (Venish Joe Clarence)</author>
+      <guid>https://venishjoe.net/post/places-visited-heatmap/</guid>
+      <description>&lt;p&gt;I had a list of cities, addresses, landmarks etc. visited by me over the years and I was looking into ways to visualize those.
+During my search, I came across &lt;a href=&#34;https://developers.google.com/maps/documentation/javascript/heatmaplayer&#34;&gt;Google Maps JavaScript API&lt;/a&gt;
+which not only visualizes location data but also has ways to show places which are visited more often than others.
+But the API needs location data in a specific format with latitue and longitude coordinates in a JavaScript along with weightage for each.&lt;/p&gt;
+
+&lt;p&gt;This project is to convert my plain text cities, addresses, landmark etc. data to geographic coordinates and assign weightage to each location.
+Once I have that, integrate the data with Google Maps to visualize.&lt;/p&gt;
+
+&lt;p&gt;Our end result will look like below. This is generated with a smaller set of test data.
+Complete project is available in my Github &lt;a href=&#34;https://github.com/venishjoe/places-visited-heatmap&#34;&gt;places-visited-heatmap&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00012/places-visited-heatmap.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s get started.&lt;/p&gt;
+
+&lt;h5 id=&#34;google-api-keys&#34;&gt;Google API Keys&lt;/h5&gt;
+
+&lt;p&gt;To start with, for both retrieving geographic coordinatesa nd visualizing data, we need free Google API Keys, actually two different keys as -
+for Geo operations we need &amp;ldquo;Google Geo API Key&amp;rdquo; for retrieving geographic coordinates and &amp;ldquo;Google API Key&amp;rdquo; for visualizing. To get the keys, all
+you need is a Google account.&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Google Geo API Key&amp;rdquo; - &lt;a href=&#34;https://developers.google.com/maps/documentation/geocoding/get-api-key&#34;&gt;developers.google.com/maps/documentation/geocoding/get-api-key&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&amp;ldquo;Google API Key&amp;rdquo; - &lt;a href=&#34;https://developers.google.com/maps/documentation/javascript/get-api-key&#34;&gt;developers.google.com/maps/documentation/javascript/get-api-key&lt;/a&gt;&lt;/p&gt;
+
+&lt;h5 id=&#34;convert-data&#34;&gt;Convert Data&lt;/h5&gt;
+
+&lt;p&gt;Once you have API keys, we can get started with converting plain text data to geographic coordinates. I am using Go to implementing data transformation.&lt;/p&gt;
+
+&lt;p&gt;My input data is going to be a text file with location details. Something like below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;clean&#34;&gt;Niagara Falls, NY
+San Francisco, CA
+Empire State Building, NY
+Acadia National Park, Bar Harbour, ME
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I open this file and start scanning using bufio. I also create two new output files - locationlatlng.data to write location data with geographic coordinates,
+if you are just interested in only converting data and also places_data.js which will be a JavaScript file with location data which will be used by
+Google Maps JavaScript API to visualize data.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;//Read Input File with Locations Data
+fileWithLocationData, errReadingLocationData := os.Open(&#34;../data/location.data&#34;)
+handleFatalError(errReadingLocationData)
+fileWithLocationDataScanner := bufio.NewScanner(fileWithLocationData)
+
+//Create file to write output delimited data
+locationDataFileWithLatLng, errWritingFileWithLatLng := os.Create(&#34;../data/locationlatlng.data&#34;)
+handleFatalError(errWritingFileWithLatLng)
+
+//Create file to write output JS for Goolgle Maps Rendering
+jsDataForHeatMap, errWritingJSDataForHeatMap := os.Create(&#34;../ui/places_data.js&#34;)
+handleFatalError(errWritingJSDataForHeatMap)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once the input location.data file is scanned, we can start reading line by line and process using Geocode API. We will be sending Google geo API key
+along with the data from input file to the web service and process response JSON to retrieve data corresponding to input. To process JSON we
+will use this excellent library &lt;a href=&#34;https://github.com/tidwall/gjson&#34;&gt;gjson&lt;/a&gt; which helps in parsing response JSON.&lt;/p&gt;
+
+&lt;p&gt;From response JSON, we will be reading formatted_address, address_components which will be primarily used only for the output file and not for visualization
+JavaScript. For visualization, we will be reading geometry.location.lat &amp;amp; geometry.location.lng (which will also be written to output file)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;//Read Google API Key
+googleAPIKey, errReadingAPIKey := ioutil.ReadFile(&#34;../data/googlegeoapi.key&#34;)
+handleFatalError(errReadingAPIKey)
+
+//Build Web Service URL
+googleAPIBaseURL := &#34;https://maps.googleapis.com/maps/api/geocode/json?key=&#34; + string(googleAPIKey) + &#34;&amp;address=&#34;
+
+//Call Web Service
+googleAPIConstructedURL := googleAPIBaseURL + url.QueryEscape(fileWithLocationDataScanner.Text())
+response, errFromAPI := httpClient.Get(googleAPIConstructedURL)
+handleFatalError(errFromAPI)
+responseBytes, errFromReadResponse := ioutil.ReadAll(response.Body)
+responseString := string(responseBytes)
+
+//Process response from service
+formattedAddressArray := gjson.Get(responseString, &#34;results.#.formatted_address&#34;)
+for _, formattedAddress := range formattedAddressArray.Array() {
+    fmt.Fprintf(locationDataFileWithLatLng, formattedAddress.String()+&#34;$&#34;)
+    addressComponentsArray := gjson.Get(responseString, &#34;results.&#34;+strconv.Itoa(indexInner)+&#34;.address_components.#.short_name&#34;)
+
+    for _, addressComponentsArray := range addressComponentsArray.Array() {
+        fmt.Fprintf(locationDataFileWithLatLng, addressComponentsArray.String()+&#34;$&#34;)
+    }
+    geometryLocationLat := gjson.Get(responseString, &#34;results.&#34;+strconv.Itoa(indexInner)+&#34;.geometry.location.lat&#34;)
+    geometryLocationLng := gjson.Get(responseString, &#34;results.&#34;+strconv.Itoa(indexInner)+&#34;.geometry.location.lng&#34;)
+    fmt.Fprintf(locationDataFileWithLatLng, geometryLocationLat.String()+&#34;$&#34;+geometryLocationLng.String()+&#34;\n&#34;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now we have all the data we are looking for, we can start building JavaScript data for visualization. If you remember,
+I was mentioning about assign weightage to each location on how frequent it appears in our input. Which basically means, if I
+visited location A three times and location B one time, in the map we should show location A with high intensity. That&amp;rsquo;s
+done by assigning weight to every location.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s start by creating a struct to hold our data for visualization. We need latitude, longitude and weight.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;//LocationHeatMapData - Data structure to hold heat map data
+type LocationHeatMapData struct {
+    Latitude, Longitude string
+    Weight              float64
+}
+
+//LocationHeatMap - Data structure to hold LocationHeatMapData
+type LocationHeatMap struct {
+    LocationHeatMap []LocationHeatMapData
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, we have to start loading geographic coordinates data from response JSON to our LocationHeatMapData struct.
+We will use a constant weight of 0.5 for every location we add. If same geographic coordinates already exists in
+LocationHeatMapData, then we will increment weight by 0.1. So, more frequently visited places will have a higher
+weightage compared to rest.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;if len(locationHeatMap.LocationHeatMap) == 0 {
+    locationHeatMap.LocationHeatMap = append(locationHeatMap.LocationHeatMap,
+    LocationHeatMapData{Latitude: geometryLocationLat.String(), Longitude: geometryLocationLng.String(), Weight: 0.5})
+} else {
+    dataMatchIndex := checkIfValueExists(locationHeatMap, geometryLocationLat.String(), geometryLocationLng.String())
+    if dataMatchIndex != -1 {
+        locationHeatMap.LocationHeatMap[dataMatchIndex].Weight = locationHeatMap.LocationHeatMap[dataMatchIndex].Weight + 0.1
+    } else {
+        locationHeatMap.LocationHeatMap = append(locationHeatMap.LocationHeatMap,
+        LocationHeatMapData{Latitude: geometryLocationLat.String(), Longitude: geometryLocationLng.String(), Weight: 0.5})
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To check for existing location in LocationHeatMapData struct we will use below function&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;//Function to check if Latitue/Longitue exists in data structure
+func checkIfValueExists(locationHeatMapCheck LocationHeatMap, geometryLocationLatCheck, geometryLocationLngCheck string) int {
+    for locationDataIndexCheck := 0; locationDataIndexCheck &lt; len(locationHeatMapCheck.LocationHeatMap); locationDataIndexCheck++ {
+        if locationHeatMapCheck.LocationHeatMap[locationDataIndexCheck].Latitude == geometryLocationLatCheck &amp;&amp;
+            locationHeatMapCheck.LocationHeatMap[locationDataIndexCheck].Longitude == geometryLocationLngCheck {
+            return locationDataIndexCheck
+        }
+    }
+    return -1
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally, we write all the data to places_data.js file under getDataPoints() function which will be used by visualization library in
+next section&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;golang&#34;&gt;fmt.Fprintf(jsDataForHeatMap, &#34;function getDataPoints() { \n\treturn [\n&#34;)
+for indexLocationDataWriteIndex := 0; indexLocationDataWriteIndex &lt; len(locationHeatMap.LocationHeatMap); indexLocationDataWriteIndex++ {
+    fmt.Fprintf(jsDataForHeatMap, &#34;\t\t{location: new google.maps.LatLng(&#34;+
+    locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Latitude+&#34;, &#34;+
+    locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Longitude+&#34;), weight: &#34;+
+    strconv.FormatFloat(locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Weight, &#39;f&#39;, 1, 64)+&#34;}&#34;)
+
+    if indexLocationDataWriteIndex == len(locationHeatMap.LocationHeatMap)-1 {
+        fmt.Fprintf(jsDataForHeatMap, &#34;\n&#34;)
+    } else {
+        fmt.Fprintf(jsDataForHeatMap, &#34;,\n&#34;)
+    }
+}
+fmt.Fprintf(jsDataForHeatMap, &#34;\t]; \n}&#34;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h5 id=&#34;visualization&#34;&gt;Visualization&lt;/h5&gt;
+
+&lt;p&gt;Now, we should have a JavaScript file (places_data.js) like below.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;js&#34;&gt;function getDataPoints() { 
+return [
+        {location: new google.maps.LatLng(36.1699412, -115.1398296), weight: 0.7},
+        {location: new google.maps.LatLng(43.0962143, -79.0377388), weight: 0.8},
+        ...
+        {location: new google.maps.LatLng(32.715738, -117.1610838), weight: 0.5}
+    ]; 
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;All we have to do now is to include this JavaScript in a HTML page which will load Google maps and load our location data as a
+heatmap on the map. For loading Google maps for heatmap visualization, we need Google API Key (not same as Geo API Key)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;html&#34;&gt;&amp;lt;script type=&amp;quot;text/javascript&amp;quot; src=&amp;quot;places_data.js&amp;quot;&amp;gt;&amp;lt;/script&amp;gt;
+&amp;lt;script async defer src=&amp;quot;https://maps.googleapis.com/maps/api/js?key=##YOUR_API_KEY_HERE##&amp;amp;libraries=visualization&amp;amp;callback=initMap&amp;quot;&amp;gt;&amp;lt;/script&amp;gt;
+&amp;lt;script&amp;gt;
+    var map, heatmap;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById(&#39;map&#39;), {
+            zoom: 5,
+            center: {lat: 40.055347, lng: -101.030931},
+            mapTypeId: &#39;roadmap&#39;
+        });
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            data: getDataPoints(),
+            map: map
+        });
+        //Radius configuration
+        heatmap.set(&#39;radius&#39;, heatmap.get(&#39;radius&#39;) ? null : 20);
+        //Opacity configuration
+        heatmap.set(&#39;opacity&#39;, 0.8);
+    }
+&amp;lt;/script&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once we load this HTML in browser, it should produce something like below. There are lot of customizations which can be done on the map.
+All configuration options are documented under &lt;a href=&#34;https://developers.google.com/maps/documentation/javascript/tutorial&#34;&gt;Google Documentation&lt;/a&gt;.
+Below screenshot is a vanilla render.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://venishjoe.net/media/images/00012/places-visited-heatmap.png#floatcenter&#34; alt=&#34;&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Full source code for all snippets referenced in this article is available in &lt;a href=&#34;https://github.com/venishjoe/places-visited-heatmap&#34;&gt;my github&lt;/a&gt; page.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

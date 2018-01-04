@@ -3,6 +3,13 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://venishjoe.net/post/places-visited-heatmap/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/post/java-bytecode-manipulation/</loc>
     <lastmod>2017-04-09T01:40:22-05:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -156,8 +163,50 @@
   </url>
   
   <url>
+    <loc>https://venishjoe.net/tags/geocode/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/tags/geronimo/</loc>
     <lastmod>2009-09-20T17:24:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/tags/go/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/tags/golang/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/tags/google-api/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/tags/google-maps/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/tags/heatmap/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -219,6 +268,20 @@
   </url>
   
   <url>
+    <loc>https://venishjoe.net/tags/map/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://venishjoe.net/categories/maps/gis/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/tags/memory/</loc>
     <lastmod>2009-10-11T01:15:00+00:00</lastmod>
     <changefreq>monthly</changefreq>
@@ -275,15 +338,22 @@
   </url>
   
   <url>
+    <loc>https://venishjoe.net/tags/places-visited/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/post/</loc>
-    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://venishjoe.net/categories/programming/</loc>
-    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>
@@ -380,8 +450,15 @@
   </url>
   
   <url>
+    <loc>https://venishjoe.net/categories/utilities/</loc>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://venishjoe.net/</loc>
-    <lastmod>2017-04-09T01:40:22-05:00</lastmod>
+    <lastmod>2018-01-03T10:00:00-05:00</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0</priority>
   </url>

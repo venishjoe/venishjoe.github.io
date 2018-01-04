@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-08-31T23:54:00&#43;00:00"/>
+<meta property="og:updated_time" content="2009-09-20T17:24:00&#43;00:00"/>
 
 
 
@@ -57,6 +57,104 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Programming</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/recover-database-passwords-from-weblogic-server/" rel="bookmark">Recover Database Passwords from Weblogic Server</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>In this post, I am going to explain how to Decrypt or recover the passwords which are encrypted (or hashed) in Weblogic 8.1 especially the database passwords.
+If you ever forgot the database password which is already configured with Weblogic or the password for the user which is used to start Weblogic, this will be handy.
+The hashed passwords can be normally found in config.xml and boot.properties inside the application domain.
+The database passwords will be in config.xml under the JDBC configuration and will look something like below.</p>
+
+<pre><code>$ PasswordEncrypted=&quot;{3DES}bDcllidskanDsaIsnaiG==&quot;
+</code></pre>
+
+<p>To recover the passwords, we need some prerequisites which are listed below.</p>
+
+<ol>
+<li>weblogic.jar &amp; jsafeFIPS.jar from the Weblogic server. (You can find this under WL_HOME/server/lib directory)</li>
+<li>SerializedSystemIni.dat from the application domain (You can find this under the application domain root)</li>
+<li>The encrypted password from config.xml / boot.properties including {3DES}</li>
+</ol>
+
+<p>SerializedSystemIni.dat has the key to recover the passwords so this is absolutely essential and it should be from the same server since the key depends on the machine.
+If you are not able to find this file, then probably the server administrator hasn’t given read access to this file to all the users. For Production systems that should be a practice,
+only the id which will be starting the weblogic server should have read permissions to the SerializedSystemIni.dat file. If not, this will be a security risk,
+its like leaving the key for your Home on the street. Coming back to the subject, if you got the file then you are all set for the next step.</p>
+
+<p>Assuming you have all the files needed, let’s proceed to the next step. You can copy all the prerequisite files to your workstation or if needed you can run the utility from the server too.
+As long as the machines have JDK installed it should be fine.</p>
+
+<p>To recover the passwords we will be using a utility from Apache <a href="http://geronimo.apache.org/apidocs/2.0.1/">Geronimo 2.0.1 API</a> -
+<a href="http://geronimo.apache.org/apidocs/2.0.1/src-html/org/apache/geronimo/converter/bea/Weblogic81Utils.html">Weblogic81Utils.java</a>. Although this file is a part of a package,
+this can be run as a standalone class with little modification. All you need to do is to remove the package reference and add a main() method to the class.
+The code for main() method is below.</p>
+
+<pre><code class="java">public static void main(String args[]) {
+    try{
+        String beaDir = "$Server/lib or the Directory which has the requried JAR files$";
+        String appDir = "$App Domain or the Directory which has SerializedSystemIni.dat$";
+        String hashedPassword = "{3DES}Vdsds76nGsfdsfKJbg54ss==";
+        Weblogic81Utils weblogic81Utils = new Weblogic81Utils(beaDir, appDir);
+        String plainTextPassword = weblogic81Utils.decryptString(hashedPassword);
+        String configXML = weblogic81Utils.getConfigXML();
+        Properties bootProperties = (Properties) weblogic81Utils.getBootProperties();
+        System.out.println("-----------------------------------------------------");
+        System.out.println("hashedPassword" + " == " + plainTextPassword);
+        System.out.println("boot.properties" + " &lt;username&gt; "
+            + bootProperties.getProperty("username"));
+        System.out.println("boot.properties" + " &lt;password&gt; "
+            + bootProperties.getProperty("password"));
+        System.out.println("-----------------------------------------------------");
+    } catch (Exception e) {
+        throw (RuntimeException)new IllegalArgumentException("Unable to initialize"
+            + "encryption routines from provided arguments").initCause(e);
+    }
+}
+</code></pre>
+
+<p>beaDir - If you are running this on the server, it will be the $WL_HOME/server/lib directory. If you are running elsewhere it will be the path which has weblogic.jar and jsafeFIPS.jar.</p>
+
+<p>appDir - If you are running this on the server, it will be your application domain directory. If you are running elsewhere, it will be the path which contains SerializedSystemIni.dat,
+config.xml and boot.properties.</p>
+
+<p>hashedPassword – In this example, I am not reading config.xml directly instead I give the encrypted password as a input. So this will be the encrypted database password from your config.xml.</p>
+
+<p>Save the class file and we are all set to run the program. Make sure you removed the package reference since we are running this as a standalone program. No other change is required.
+Compile the class and run the class. I tested this using JDK 1.6, but any JDK higher than 1.4 should work.</p>
+
+<p>Sample output is given below.</p>
+
+<p><img src="/media/images/00002/recover-database-passwords-output.png#floatcenter" alt="" /></p>
+
+<p>This was tested with Weblogic Server 8.1 and JDK 1.6.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/security/" rel="tag">Security</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/database/" rel="tag">Database</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/geronimo/" rel="tag">Geronimo</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/3des/" rel="tag">3DES</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/password-recovery/" rel="tag">Password Recovery</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/reverse-engineering/" rel="tag">Reverse Engineering</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/weblogic/" rel="tag">Weblogic</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -209,6 +307,7 @@ else
 	<h4 class="widget__title">Popular Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
 		</ul>
@@ -219,10 +318,10 @@ else
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
 		</ul>
 	</div>
 </div>
@@ -232,12 +331,14 @@ else
 	<div class="widget__content">
 		<ul class="widget__list">
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/maps/gis">Maps/Gis</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/network">Network</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/performance">Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/programming">Programming</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/reverse-engineering">Reverse-Engineering</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/security">Security</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/system">System</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/utilities">Utilities</a></li>
 		</ul>
 	</div>
 </div>
@@ -253,7 +354,13 @@ else
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/errors" title="errors">errors (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geocode" title="geocode">geocode (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/go" title="go">go (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/golang" title="golang">golang (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-api" title="google-api">google-api (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-maps" title="google-maps">google-maps (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/heatmap" title="heatmap">heatmap (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
@@ -261,12 +368,14 @@ else
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/map" title="map">map (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/places-visited" title="places-visited">places-visited (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
@@ -303,7 +412,7 @@ else
 	</div>
 		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
 			<div class="container container-inner">
-				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+				<p class="footer__copyright">&copy; 2018 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
 			</div>
 		</footer>
 	</div>

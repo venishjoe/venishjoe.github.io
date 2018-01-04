@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utilities - Venish Joe Clarence</title>
+
+<meta name="generator" content="Hugo 0.26" />
+<meta property="og:title" content="Utilities" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://venishjoe.net/categories/utilities/" />
+
+
+
+<meta property="og:updated_time" content="2018-01-03T10:00:00-05:00"/>
+
+
+
+
+
+
+
+
+
+
+<link rel="dns-prefetch" href="//fonts.googleapis.com" />
+<link rel="alternate" type="application/rss+xml" title="VENISHJOE.NET Feed" href="https://venishjoe.net/categories/utilities/index.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700" type="text/css" media="all" />
+<link rel="stylesheet" href="https://venishjoe.net/css/style.css" type="text/css" media="all" />
+<script type="text/javascript" src="https://venishjoe.net/js/scripts.js"></script>
+<link rel="stylesheet" href="/highlight/styles/agate.css">
+<script src="/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body class="body body-right-sidebar mobile" itemscope="itemscope" itemtype="http://schema.org/WebPage">
+	<div class="container container-outer">
+		<header class="header" itemscope="itemscope" itemtype="http://schema.org/WPHeader">
+			<div class="container container-inner clearfix">
+				<div class="logo" role="banner" itemscope="itemscope" itemtype="http://schema.org/Brand">
+					<a class="logo__link" href="https://venishjoe.net/" title="VENISHJOE.NET" rel="home">
+						<h1 class="logo__title"><img src="/images/venishjoe_net_logo.png" height="30px" width="30px">&nbsp;&nbsp;VENISHJOE.NET</h1>
+						<h2 class="logo__tagline">It&#39;s 5:50 a.m... Do you know where your stack pointer is ?</h2>
+					</a>
+				</div>
+			</div>
+			<nav class="menu" itemscope="itemscope" itemtype="http://schema.org/SiteNavigationElement">
+	<ul class="menu__list">
+		<li class="menu__item"><a class="menu__link" href="https://venishjoe.net/">HOME</a></li>
+		<li class="menu__item "><a class="menu__link" href="/all/">INDEX</a></li>
+	</ul>
+</nav>
+		</header>
+		<div class="wrapper clearfix">
+
+	<div class="main-content loop content" role="main">
+		<header class="page-header">
+			<h1 class="page-header__title">Utilities</h1>
+		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/places-visited-heatmap/" rel="bookmark">Places Visited Heatmap</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>I had a list of cities, addresses, landmarks etc. visited by me over the years and I was looking into ways to visualize those.
+During my search, I came across <a href="https://developers.google.com/maps/documentation/javascript/heatmaplayer">Google Maps JavaScript API</a>
+which not only visualizes location data but also has ways to show places which are visited more often than others.
+But the API needs location data in a specific format with latitue and longitude coordinates in a JavaScript along with weightage for each.</p>
+
+<p>This project is to convert my plain text cities, addresses, landmark etc. data to geographic coordinates and assign weightage to each location.
+Once I have that, integrate the data with Google Maps to visualize.</p>
+
+<p>Our end result will look like below. This is generated with a smaller set of test data.
+Complete project is available in my Github <a href="https://github.com/venishjoe/places-visited-heatmap">places-visited-heatmap</a></p>
+
+<p><img src="/media/images/00012/places-visited-heatmap.png#floatcenter" alt="" /></p>
+
+<p>Let&rsquo;s get started.</p>
+
+<h5 id="google-api-keys">Google API Keys</h5>
+
+<p>To start with, for both retrieving geographic coordinatesa nd visualizing data, we need free Google API Keys, actually two different keys as -
+for Geo operations we need &ldquo;Google Geo API Key&rdquo; for retrieving geographic coordinates and &ldquo;Google API Key&rdquo; for visualizing. To get the keys, all
+you need is a Google account.</p>
+
+<p>&ldquo;Google Geo API Key&rdquo; - <a href="https://developers.google.com/maps/documentation/geocoding/get-api-key">developers.google.com/maps/documentation/geocoding/get-api-key</a></p>
+
+<p>&ldquo;Google API Key&rdquo; - <a href="https://developers.google.com/maps/documentation/javascript/get-api-key">developers.google.com/maps/documentation/javascript/get-api-key</a></p>
+
+<h5 id="convert-data">Convert Data</h5>
+
+<p>Once you have API keys, we can get started with converting plain text data to geographic coordinates. I am using Go to implementing data transformation.</p>
+
+<p>My input data is going to be a text file with location details. Something like below.</p>
+
+<pre><code class="clean">Niagara Falls, NY
+San Francisco, CA
+Empire State Building, NY
+Acadia National Park, Bar Harbour, ME
+</code></pre>
+
+<p>I open this file and start scanning using bufio. I also create two new output files - locationlatlng.data to write location data with geographic coordinates,
+if you are just interested in only converting data and also places_data.js which will be a JavaScript file with location data which will be used by
+Google Maps JavaScript API to visualize data.</p>
+
+<pre><code class="golang">//Read Input File with Locations Data
+fileWithLocationData, errReadingLocationData := os.Open("../data/location.data")
+handleFatalError(errReadingLocationData)
+fileWithLocationDataScanner := bufio.NewScanner(fileWithLocationData)
+
+//Create file to write output delimited data
+locationDataFileWithLatLng, errWritingFileWithLatLng := os.Create("../data/locationlatlng.data")
+handleFatalError(errWritingFileWithLatLng)
+
+//Create file to write output JS for Goolgle Maps Rendering
+jsDataForHeatMap, errWritingJSDataForHeatMap := os.Create("../ui/places_data.js")
+handleFatalError(errWritingJSDataForHeatMap)
+</code></pre>
+
+<p>Once the input location.data file is scanned, we can start reading line by line and process using Geocode API. We will be sending Google geo API key
+along with the data from input file to the web service and process response JSON to retrieve data corresponding to input. To process JSON we
+will use this excellent library <a href="https://github.com/tidwall/gjson">gjson</a> which helps in parsing response JSON.</p>
+
+<p>From response JSON, we will be reading formatted_address, address_components which will be primarily used only for the output file and not for visualization
+JavaScript. For visualization, we will be reading geometry.location.lat &amp; geometry.location.lng (which will also be written to output file)</p>
+
+<pre><code class="golang">//Read Google API Key
+googleAPIKey, errReadingAPIKey := ioutil.ReadFile("../data/googlegeoapi.key")
+handleFatalError(errReadingAPIKey)
+
+//Build Web Service URL
+googleAPIBaseURL := "https://maps.googleapis.com/maps/api/geocode/json?key=" + string(googleAPIKey) + "&address="
+
+//Call Web Service
+googleAPIConstructedURL := googleAPIBaseURL + url.QueryEscape(fileWithLocationDataScanner.Text())
+response, errFromAPI := httpClient.Get(googleAPIConstructedURL)
+handleFatalError(errFromAPI)
+responseBytes, errFromReadResponse := ioutil.ReadAll(response.Body)
+responseString := string(responseBytes)
+
+//Process response from service
+formattedAddressArray := gjson.Get(responseString, "results.#.formatted_address")
+for _, formattedAddress := range formattedAddressArray.Array() {
+    fmt.Fprintf(locationDataFileWithLatLng, formattedAddress.String()+"$")
+    addressComponentsArray := gjson.Get(responseString, "results."+strconv.Itoa(indexInner)+".address_components.#.short_name")
+
+    for _, addressComponentsArray := range addressComponentsArray.Array() {
+        fmt.Fprintf(locationDataFileWithLatLng, addressComponentsArray.String()+"$")
+    }
+    geometryLocationLat := gjson.Get(responseString, "results."+strconv.Itoa(indexInner)+".geometry.location.lat")
+    geometryLocationLng := gjson.Get(responseString, "results."+strconv.Itoa(indexInner)+".geometry.location.lng")
+    fmt.Fprintf(locationDataFileWithLatLng, geometryLocationLat.String()+"$"+geometryLocationLng.String()+"\n")
+</code></pre>
+
+<p>Now we have all the data we are looking for, we can start building JavaScript data for visualization. If you remember,
+I was mentioning about assign weightage to each location on how frequent it appears in our input. Which basically means, if I
+visited location A three times and location B one time, in the map we should show location A with high intensity. That&rsquo;s
+done by assigning weight to every location.</p>
+
+<p>Let&rsquo;s start by creating a struct to hold our data for visualization. We need latitude, longitude and weight.</p>
+
+<pre><code class="golang">//LocationHeatMapData - Data structure to hold heat map data
+type LocationHeatMapData struct {
+    Latitude, Longitude string
+    Weight              float64
+}
+
+//LocationHeatMap - Data structure to hold LocationHeatMapData
+type LocationHeatMap struct {
+    LocationHeatMap []LocationHeatMapData
+}
+</code></pre>
+
+<p>Now, we have to start loading geographic coordinates data from response JSON to our LocationHeatMapData struct.
+We will use a constant weight of 0.5 for every location we add. If same geographic coordinates already exists in
+LocationHeatMapData, then we will increment weight by 0.1. So, more frequently visited places will have a higher
+weightage compared to rest.</p>
+
+<pre><code class="golang">if len(locationHeatMap.LocationHeatMap) == 0 {
+    locationHeatMap.LocationHeatMap = append(locationHeatMap.LocationHeatMap,
+    LocationHeatMapData{Latitude: geometryLocationLat.String(), Longitude: geometryLocationLng.String(), Weight: 0.5})
+} else {
+    dataMatchIndex := checkIfValueExists(locationHeatMap, geometryLocationLat.String(), geometryLocationLng.String())
+    if dataMatchIndex != -1 {
+        locationHeatMap.LocationHeatMap[dataMatchIndex].Weight = locationHeatMap.LocationHeatMap[dataMatchIndex].Weight + 0.1
+    } else {
+        locationHeatMap.LocationHeatMap = append(locationHeatMap.LocationHeatMap,
+        LocationHeatMapData{Latitude: geometryLocationLat.String(), Longitude: geometryLocationLng.String(), Weight: 0.5})
+    }
+}
+</code></pre>
+
+<p>To check for existing location in LocationHeatMapData struct we will use below function</p>
+
+<pre><code class="golang">//Function to check if Latitue/Longitue exists in data structure
+func checkIfValueExists(locationHeatMapCheck LocationHeatMap, geometryLocationLatCheck, geometryLocationLngCheck string) int {
+    for locationDataIndexCheck := 0; locationDataIndexCheck < len(locationHeatMapCheck.LocationHeatMap); locationDataIndexCheck++ {
+        if locationHeatMapCheck.LocationHeatMap[locationDataIndexCheck].Latitude == geometryLocationLatCheck &&
+            locationHeatMapCheck.LocationHeatMap[locationDataIndexCheck].Longitude == geometryLocationLngCheck {
+            return locationDataIndexCheck
+        }
+    }
+    return -1
+}
+</code></pre>
+
+<p>Finally, we write all the data to places_data.js file under getDataPoints() function which will be used by visualization library in
+next section</p>
+
+<pre><code class="golang">fmt.Fprintf(jsDataForHeatMap, "function getDataPoints() { \n\treturn [\n")
+for indexLocationDataWriteIndex := 0; indexLocationDataWriteIndex < len(locationHeatMap.LocationHeatMap); indexLocationDataWriteIndex++ {
+    fmt.Fprintf(jsDataForHeatMap, "\t\t{location: new google.maps.LatLng("+
+    locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Latitude+", "+
+    locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Longitude+"), weight: "+
+    strconv.FormatFloat(locationHeatMap.LocationHeatMap[indexLocationDataWriteIndex].Weight, 'f', 1, 64)+"}")
+
+    if indexLocationDataWriteIndex == len(locationHeatMap.LocationHeatMap)-1 {
+        fmt.Fprintf(jsDataForHeatMap, "\n")
+    } else {
+        fmt.Fprintf(jsDataForHeatMap, ",\n")
+    }
+}
+fmt.Fprintf(jsDataForHeatMap, "\t]; \n}")
+</code></pre>
+
+<h5 id="visualization">Visualization</h5>
+
+<p>Now, we should have a JavaScript file (places_data.js) like below.</p>
+
+<pre><code class="js">function getDataPoints() { 
+return [
+        {location: new google.maps.LatLng(36.1699412, -115.1398296), weight: 0.7},
+        {location: new google.maps.LatLng(43.0962143, -79.0377388), weight: 0.8},
+        ...
+        {location: new google.maps.LatLng(32.715738, -117.1610838), weight: 0.5}
+    ]; 
+}
+</code></pre>
+
+<p>All we have to do now is to include this JavaScript in a HTML page which will load Google maps and load our location data as a
+heatmap on the map. For loading Google maps for heatmap visualization, we need Google API Key (not same as Geo API Key)</p>
+
+<pre><code class="html">&lt;script type=&quot;text/javascript&quot; src=&quot;places_data.js&quot;&gt;&lt;/script&gt;
+&lt;script async defer src=&quot;https://maps.googleapis.com/maps/api/js?key=##YOUR_API_KEY_HERE##&amp;libraries=visualization&amp;callback=initMap&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+    var map, heatmap;
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 5,
+            center: {lat: 40.055347, lng: -101.030931},
+            mapTypeId: 'roadmap'
+        });
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            data: getDataPoints(),
+            map: map
+        });
+        //Radius configuration
+        heatmap.set('radius', heatmap.get('radius') ? null : 20);
+        //Opacity configuration
+        heatmap.set('opacity', 0.8);
+    }
+&lt;/script&gt;
+</code></pre>
+
+<p>Once we load this HTML in browser, it should produce something like below. There are lot of customizations which can be done on the map.
+All configuration options are documented under <a href="https://developers.google.com/maps/documentation/javascript/tutorial">Google Documentation</a>.
+Below screenshot is a vanilla render.</p>
+
+<p><img src="/media/images/00012/places-visited-heatmap.png#floatcenter" alt="" /></p>
+
+<p>Full source code for all snippets referenced in this article is available in <a href="https://github.com/venishjoe/places-visited-heatmap">my github</a> page.</p>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/go/" rel="tag">Go</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/map/" rel="tag">Map</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/heatmap/" rel="tag">Heatmap</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/places-visited/" rel="tag">Places Visited</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/geocode/" rel="tag">Geocode</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/google-maps/" rel="tag">Google Maps</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/google-api/" rel="tag">Google API</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/golang/" rel="tag">Golang</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
+
+		
+	</div>
+
+<aside class="sidebar" itemscope="itemscope" itemtype="http://schema.org/WPSideBar">
+	
+<div class="widget-search widget">
+	<form class="widget-search__form" role="search" method="get" action="//google.com/search">
+		<label>
+			<span class="screen-reader-text">Search for:</span>
+			<input class="widget-search__field" type="search" placeholder="SEARCH..." value="" name="q">
+		</label>
+		<input class="widget-search__submit" type="submit" value="Search">
+		<input type="hidden" name="sitesearch" value="https://venishjoe.net/" />
+	</form>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Popular Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-recent widget">
+	<h4 class="widget__title">Recent Articles</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
+			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-categories widget">
+	<h4 class="widget__title">Categories</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/maps/gis">Maps/Gis</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/network">Network</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/performance">Performance</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/programming">Programming</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/reverse-engineering">Reverse-Engineering</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/security">Security</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/system">System</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/utilities">Utilities</a></li>
+		</ul>
+	</div>
+</div>
+	
+<div class="widget-taglist widget">
+	<h4 class="widget__title">Tags</h4>
+	<div class="widget__content">
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/3des" title="3des">3des (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/bytecode" title="bytecode">bytecode (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/classloader" title="classloader">classloader (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/core-java" title="core-java">core-java (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/database" title="database">database (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/errors" title="errors">errors (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geocode" title="geocode">geocode (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/go" title="go">go (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/golang" title="golang">golang (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-api" title="google-api">google-api (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-maps" title="google-maps">google-maps (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/heatmap" title="heatmap">heatmap (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jdk7" title="jdk7">jdk7 (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/map" title="map">map (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/places-visited" title="places-visited">places-visited (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/security" title="security">security (6)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/serial-key" title="serial-key">serial-key (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/server" title="server">server (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/sign" title="sign">sign (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/struts" title="struts">struts (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/system" title="system">system (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/weblogic" title="weblogic">weblogic (1)</a>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Links</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="https://github.com/venishjoe/">GitHub</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://www.linkedin.com/in/venishjoe/">LinkedIn</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/index.xml" type="application/rss+xml" target="_blank">RSS Feed</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://500px.com/venishjoe">500px</a></li>
+			<li class="widget__item"><a class="widget__link" href="http://www.flickr.com/photos/venishjoe">Flickr</a></li>
+		</ul>
+	</div>
+</div>
+	<div class="widget-recent widget">
+	<h4 class="widget__title">Contact</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="venish [at] venishjoe.net" rel="nofollow" onclick="this.href='mailto:' + 'venish' + '@' + 'venishjoe.net'">Contact me</a></li>
+		</ul>
+	</div>
+</div>
+</aside>
+	</div>
+		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
+			<div class="container container-inner">
+				<p class="footer__copyright">&copy; 2018 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+			</div>
+		</footer>
+	</div>
+
+<script>
+	var navigation = responsiveNav(".menu", {
+		navClass: "menu--collapse",
+	});
+</script>
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-292719-4', 'auto');
+ga('send', 'pageview');
+</script>
+
+</body>
+</html>

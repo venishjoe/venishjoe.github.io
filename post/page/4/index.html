@@ -13,7 +13,7 @@
 
 
 
-<meta property="og:updated_time" content="2009-10-13T22:45:00&#43;00:00"/>
+<meta property="og:updated_time" content="2009-10-18T02:23:00&#43;00:00"/>
 
 
 
@@ -57,6 +57,127 @@
 		<header class="page-header">
 			<h1 class="page-header__title">Posts</h1>
 		</header>
+		<article class="loop__item post clearfix">
+			<div class="loop__content clearfix">
+				<header class="loop__header">
+					<h3 class="loop__title post__title ">
+						<a href="https://venishjoe.net/post/monitor-a-directory-for-changes-using-java/" rel="bookmark">Monitor a Directory for Changes using Java</a>
+					</h3>
+					<div class="loop__meta meta">
+						
+					</div>
+				</header>
+				<div class="post__content clearfix">
+					<p>Many applications which we use on a day to day basis like a music organizer, file editors monitor the directory for any changes in the files/directories and
+take appropriate action in the application if there are any changes detected on the fly.
+Since Java do not have direct access to the system level calls (unless we use JNI, which will make the code platform specific)
+the only way to monitor any directory is to use a separate thread which will be using a lot of resources (memory &amp; disk I/O) to monitor the changes inside the directory.
+If we have sub-directories and need a recursive monitor, then the thread becomes more resource intensive.</p>
+
+<p>There was a JSR (Java Specification Request) requested to add / rewrite more I/O APIs for Java platform. This was implemented in JDK 7 as
+<a href="http://jcp.org/en/jsr/detail?id=203">JSR 203</a> with support for APIs like file system access, scalable asynchronous I/O operations,
+socket-channel binding and configuration, and multicast datagrams.</p>
+
+<p>JSR 203 is one of the big feature for JDK 7 (Developer Preview is available in java.sun.com) and its been implemented as the second I/O package is java,
+called as NIO.2. I will be looking into more of these packages in future posts, but in this,
+I will show how to monitor a directory and its sub-directories for any changes using NIO.2 (JDK 7).</p>
+
+<p>The APIs which we will be using <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchService.html">WatchService</a>
+(a watch service that watches registered objects for changes and events), <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchKey.html">WatchKey</a>
+(a token representing the registration of a watchable object with a WatchService) and <a href="http://java.sun.com/javase/7/docs/api/java/nio/file/WatchEvent.html">WatchEvent</a>
+(an event or a repeated event for an object that is registered with a WatchService) to monitor a directory. So, without further explanation, let’s start working on the code.</p>
+
+<p>Please note that you need JDK 7 to run this program. While writing this post,
+JDK 7 is available as a EA (Early Access) in <a href="http://java.sun.com/javase/downloads/ea.jsp">Java Early Access Downloads</a> page. Download the JDK and install it.</p>
+
+<p>The first step is to get a directory to monitor. Path is one of the new I/O API as a part of NIO.2 which gives us more control over the I/O.
+So let’s get the directory to watch, if you want to watch the directory recursively then there should be another boolean flag defined,
+but in this example we will watch only the parent directory.</p>
+
+<pre><code class="java">Path _directotyToWatch = Paths.get(args[0]);
+</code></pre>
+
+<p>Now let’s create a Watch service to the above directory and add a key to the service.
+In the watch key we can define what are all the events we need to look for.
+In this example we will monitor Create, Delete &amp; Rename/Modify of the files or directories in the path.</p>
+
+<pre><code class="java">WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+WatchKey watchKey = _directotyToWatch.register(
+    watcherSvc,ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+</code></pre>
+
+<p>Now we have all the variables defined. Let’s start a infinite loop to monitor the directory for any changes using WatchEvent.
+We will poll events in the directory and once some event is triggered (based on the WatchKey definition)
+we will print the type of event occurred and the name of the file/directory on which the event occurred. Once done, we will reset the watch key.</p>
+
+<pre><code class="java">while (true) {
+    watchKey=watcherSvc.take();
+    for (WatchEvent&lt;?&gt; event: watchKey.pollEvents()) {
+        WatchEvent&lt;Path&gt; watchEvent = castEvent(event);
+        System.out.println(event.kind().name().toString() + " "
+            + _directotyToWatch.resolve(watchEvent.context()));
+    watchKey.reset();
+    }
+}
+</code></pre>
+
+<p>Now to make the WatchEvent &lt;Path&gt; work, we should create a small utility as below ( this is the castEvent which is used in the above code).</p>
+
+<pre><code class="java">static &lt;T&gt; WatchEvent&lt;T&gt; castEvent(WatchEvent&lt;?&gt; event) {
+    return (WatchEvent&lt;T&gt;)event;
+}
+</code></pre>
+
+<p>Now compile the file and give a directory as a runtime parameter while running it.
+Once the program starts running, start creating some directories/files or modify/rename some files in the directory which you gave as a parameter,
+the program will start triggering the event and you should be able to watch the modifications in the console.
+A sample output from my machine is below.</p>
+
+<p><img src="/media/images/00006/monitor-a-directory-output.png#floatcenter" alt="" /></p>
+
+<p>Full source of this application is available in <a href="https://github.com/venishjoe/blog-code/tree/master/jsr203-nio2-watch-folder">my github</a> page.</p>
+
+<pre><code class="java">import java.nio.file.*;
+import static java.nio.file.StandardWatchEventKind.*;
+
+static &lt;T&gt; WatchEvent&lt;T&gt; castEvent(WatchEvent&lt;?&gt; event) {
+    return (WatchEvent&lt;T&gt;)event;
+}
+
+public static void main (String args[]) throws Exception {
+    Path _directotyToWatch = Paths.get(args[0]);
+    WatchService watcherSvc = FileSystems.getDefault().newWatchService();
+    WatchKey watchKey = _directotyToWatch.register(watcherSvc,
+        ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+
+    while (true) {
+        watchKey=watcherSvc.take();
+        for (WatchEvent&lt;?&gt; event: watchKey.pollEvents()) {
+            WatchEvent&lt;Path&gt; watchEvent = castEvent(event);
+            System.out.println(event.kind().name().toString() + " "
+                + _directotyToWatch.resolve(watchEvent.context()));
+            watchKey.reset();
+        }
+    }
+}
+</code></pre>
+
+<p></p>
+				</div>
+				
+<div class="post__tags tags clearfix">
+	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jdk7/" rel="tag">JDK7</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/jsr/" rel="tag">JSR</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/nio.2/" rel="tag">NIO.2</a></li>
+		<li class="tags__item"><a class="tags__link" href="/tags/java-ea/" rel="tag">Java EA</a></li>
+	</ul>
+</div>
+
+			</div>
+		</article>
 		<article class="loop__item post clearfix">
 			<div class="loop__content clearfix">
 				<header class="loop__header">
@@ -231,171 +352,6 @@ If its true then everything looks good and we can successfully verify the POJO a
 
 			</div>
 		</article>
-		<article class="loop__item post clearfix">
-			<div class="loop__content clearfix">
-				<header class="loop__header">
-					<h3 class="loop__title post__title ">
-						<a href="https://venishjoe.net/post/recover-from-out-of-memory-errors-in-java/" rel="bookmark">Recover from Out of Memory Errors in Java</a>
-					</h3>
-					<div class="loop__meta meta">
-						
-					</div>
-				</header>
-				<div class="post__content clearfix">
-					<p>In Java, as any other programming language there is a restriction of amount of memory any program can use.
-In languages like C the memory is limited to amount of RAM the operating system allocates to the applications or the user space.
-Since Java applications are technically running in the Java Virtual Machine (JVM), the applications have memory allocated by the JVM.
-Due to that we can start java applications with the amount of memory we need by using the –Xms and –Xmx command line parameters (Given the JVM has the memory to spare).</p>
-
-<p>In Java, the memory allocation is handled by JVM. We create the objects and JVM decides where to keep those objects in heap.
-In languages like C we can use methods like malloc to dynamically allocate memory for objects (variables) and when we are done,
-the appropriate clean up methods should be called to release the memory space.
-There are advantages in each method, and discussing them will take another separate post.</p>
-
-<p>In this post, I am going to explain how to recover from the Out of Memory errors. When a Java class faces out of memory errors,
-we should try to recover from those errors by reducing or blocking the service rather than crashing the application.
-In many cases when the application crashes due to out of memory, JVM is also impacted (which may be running other applications).</p>
-
-<p>You can ask why can’t we catch the exception.
-First of all, catching the exception means that the error has already occurred and in complex systems letting the error happen will be costly.
-This method will prevent you from the error itself. When the memory is lower than the defined threshold,
-the code is not even executed and we are taking recovery measures to free up some memory. Also if your application is using all the memory allocated to JVM,
-when out of memory error occurs it will end up crashing JVM so there is no point catching the exception since your application would have been crashed.</p>
-
-<p>To recover from the out of memory errors, we need to simulate the error first and then find a solution to recover. So this post consists of two major parts.</p>
-
-<h5 id="simulate-out-of-memory-error">Simulate Out of Memory Error</h5>
-
-<p>Simulating the error is pretty simple, we will create a lot of array objects in a loop for which JVM will allocate memory spaces. Once the objects reaches a threshold,
-the JVM throws out of memory errors. But with the current desktops having at least 1GB of RAM (with at least 100M as the max limit to JVM)
-we need to create thousands of objects to simulate the error. So as I mentioned in the start of this post we will use the –Xms and –Xmx options to start the program
-with a maximum of 2M so that we can easily simulate the error.</p>
-
-<p>Create a Java Class with the following code and start with the parameter java -Xms2m –Xmx3m</p>
-
-<pre><code class="java">public void fillMemory() throws Exception {
-    int voidSpace=20;
-    for (int outerIterator=1;outerIterator&lt;50;outerIterator++) {
-        System.out.println ("Iteration " + outerIterator + " Free Mem: "
-            + Runtime.getRuntime().freeMemory());
-        int innerIterator=10;
-        int[] memoryFillIntVar=new int[voidSpace];
-        do {
-            memoryFillIntVar[innerIterator]=0;
-            innerIterator--;
-        } while(innerIterator&gt;0);
-        voidSpace = voidSpace * 10;
-    }
-}
-</code></pre>
-
-<p>When you run this class (MemoryTest.java), you will get an output which will be similar to below.</p>
-
-<pre><code class="bash">D:\temp\>java -Xms2m -Xmx3m MemoryTest
-Iteration 1 Free Mem: 1826368
-Iteration 2 Free Mem: 1826368
-Iteration 3 Free Mem: 1826368
-Iteration 4 Free Mem: 1818352
-Iteration 5 Free Mem: 1738336
-Iteration 6 Free Mem: 1100952
-Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
-        at MemoryTest.fillMemory(MemoryTest.java:22)
-        at MemoryTest.main(MemoryTest.java:12)
-</code></pre>
-
-<p>Now we have successfully simulated the out of memory error. Let’s continue to the next part where I will show how to recover from these errors.</p>
-
-<h5 id="recover-from-the-error">Recover from the error</h5>
-
-<p>To recover from the error we will be using one of the utility classes from <a href="http://db.apache.org/derby/javadoc/engine/overview-summary.html">Apache Derby V10.6 Internals</a> called
-<a href="http://db.apache.org/derby/javadoc/engine/org/apache/derby/iapi/services/memory/LowMemory.html">LowMemory</a>. The class has the below 2 methods drawing our intrest.</p>
-
-<p>void setLowMemory() - Sets a low memory watermark where the owner of this object just hit an OutOfMemoryError.</p>
-
-<p>boolean isLowMemory() - Returns true if a low memory water mark has been set and the current free memory is lower than it.</p>
-
-<p>So we should use setLowMemory to set a threshold and once set, whenever we call the isLowMemory it will return true/false based on the available memory.
-The isLowMemory will allow an low memory watermark to be valid for five seconds after it was set. This stops an incorrect limit being set for ever.
-This could occur if other threads were freeing memory when we called Runtime.getRuntime().freeMemory().</p>
-
-<p>Now let’s rewrite our earlier MemoryTest program to use these methods to recover from the error.
-The modification is simple, we just need to encapsulate the object creation in a if condition which checks for the memory before creating the objects.
-The modified code is given below.</p>
-
-<pre><code class="java">public class MemoryTest {
-    public static void main(String[] args) throws Exception {
-        MemoryTest memoryTest = new MemoryTest ();
-        LowMemory lowMemory = new LowMemory();
-        long[] memoryFillLongVar = new long[70000];
-        lowMemory.setLowMemory();
-        memoryTest.fillMemory(lowMemory);
-    }
-    public void fillMemory(LowMemory lowMemory) throws Exception {
-        int voidSpace=20;
-        for (int outerIterator=1;outerIterator&lt;50;outerIterator++) {
-            System.out.println ("Iteration " + outerIterator + " Free Mem: "
-                + Runtime.getRuntime().freeMemory());
-            int innerIterator=10;
-            if (!lowMemory.isLowMemory()) {
-                int[] memoryFillIntVar=new int[voidSpace];
-                do {
-                    memoryFillIntVar[innerIterator]=0;
-                    innerIterator--;
-                } while(innerIterator&gt;0);
-                    voidSpace = voidSpace * 10;
-            } else {
-                System.out.println ("Memory lower than threshold to
-                    continue. Exiting the loop.");
-                break;
-            }
-        }
-    }
-}
-</code></pre>
-
-<p>Let’s run the modified code with the same command line arguments.
-The output is given below. Note that the class file for LowMemory.java is present in the same directory as of MemoryTest.</p>
-
-<pre><code class="bash">D:\temp\>java -Xms2m -Xmx3m MemoryTest
-Iteration 1 Free Mem: 1349576
-Iteration 2 Free Mem: 1349576
-Iteration 3 Free Mem: 1349576
-Iteration 4 Free Mem: 1341560
-Iteration 5 Free Mem: 1261544
-Iteration 6 Free Mem: 461528
-Memory lower than threshold to continue. Exiting the loop.
-</code></pre>
-
-<p>This will be very useful while writing distributed J2EE applications which involves huge databases and processing of a large amount of data within a class.
-This will ensure there will be no data corruption and ensure the JVM (which may host multiple applications) is able to recover from the memory errors.
-You can always call the GC and runFinalization once this error occurs to free some memory.</p>
-
-<p>Just as an additional note, in C these kind of errors can be handled as the example code given below.</p>
-
-<pre><code class="c">int *pointer = malloc(3 * sizeof(int));
-if(pointer == NULL) {
-    fprintf(stderr, "Out of memory");
-    exit(1);
-}
-</code></pre>
-
-<p></p>
-				</div>
-				
-<div class="post__tags tags clearfix">
-	<svg class="icon icon-tag" width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m4.73135 3.3795002q0-.5597-.39604-.9557-.39604-.3961-.95577-.3961-.55974 0-.95578.3961-.39604.396-.39604.9557 0 .5598.39604.9558.39604.3961.95578.3961.55973 0 .95577-.3961.39604-.396.39604-.9558zm11.26865 6.0832q0 .5596998-.39076.9504998l-5.18548 5.196q-.41188.3908-.9610504.3908-.55974 0-.9505-.3908l-7.5511496-7.5616998q-.40132-.3907-.68119-1.0666-.27987-.6759-.27987-1.2357v-4.3934q0-.54920004.40132-.95050004.40132-.4013.9505-.4013h4.39339q.55974 0 1.23565.2799.67591.2798 1.07723.6812l7.55115 7.54060004q.39076.4118.39076.961z"/></svg>
-	<ul class="tags__list">
-		<li class="tags__item"><a class="tags__link" href="/tags/java/" rel="tag">Java</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/memory/" rel="tag">Memory</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/outofmemory/" rel="tag">OutOfMemory</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/errors/" rel="tag">Errors</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/system/" rel="tag">System</a></li>
-		<li class="tags__item"><a class="tags__link" href="/tags/exceptions/" rel="tag">Exceptions</a></li>
-	</ul>
-</div>
-
-			</div>
-		</article>
 
 		
 <div class="pagination clearfix">
@@ -422,6 +378,7 @@ if(pointer == NULL) {
 	<h4 class="widget__title">Popular Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/signing-java-objects-for-secure-transfer/">Signing Java Objects for Secure Transfer</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamically-load-compiled-java-class/">Dynamically Load Compiled Java Class as a Byte Array</a></li>
 		</ul>
@@ -432,10 +389,10 @@ if(pointer == NULL) {
 	<h4 class="widget__title">Recent Articles</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/post/places-visited-heatmap/">Places Visited Heatmap</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-bytecode-manipulation/">Java Bytecode Manipulation</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/dynamic-columns-in-jsp-model-with-struts/">Dynamic Columns in JSP Model with Struts Framework</a></li>
 			<li class="widget__item"><a class="widget__link" href="/post/java-string-concatenation-and-performance/">Java String Concatenation and Performance</a></li>
-			<li class="widget__item"><a class="widget__link" href="/post/recursive-file-tree-traversing-in-java-using-nio/">Recursive File Tree Traversing in Java using NIO.2</a></li>
 		</ul>
 	</div>
 </div>
@@ -445,12 +402,14 @@ if(pointer == NULL) {
 	<div class="widget__content">
 		<ul class="widget__list">
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/j2ee">J2ee</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/maps/gis">Maps/Gis</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/network">Network</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/performance">Performance</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/programming">Programming</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/reverse-engineering">Reverse-Engineering</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/security">Security</a></li>
 			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/system">System</a></li>
+			<li class="widget__item"><a class="widget__link" href="https://venishjoe.net/categories/utilities">Utilities</a></li>
 		</ul>
 	</div>
 </div>
@@ -466,7 +425,13 @@ if(pointer == NULL) {
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/encryption" title="encryption">encryption (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/errors" title="errors">errors (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/exceptions" title="exceptions">exceptions (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geocode" title="geocode">geocode (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/geronimo" title="geronimo">geronimo (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/go" title="go">go (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/golang" title="golang">golang (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-api" title="google-api">google-api (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/google-maps" title="google-maps">google-maps (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/heatmap" title="heatmap">heatmap (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/j2ee" title="j2ee">j2ee (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java" title="java">java (11)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/java-ea" title="java-ea">java-ea (2)</a>
@@ -474,12 +439,14 @@ if(pointer == NULL) {
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsp" title="jsp">jsp (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jsr" title="jsr">jsr (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/jvm" title="jvm">jvm (2)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/map" title="map">map (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/memory" title="memory">memory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/network" title="network">network (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/nio.2" title="nio.2">nio.2 (2)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/outofmemory" title="outofmemory">outofmemory (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/password-recovery" title="password-recovery">password-recovery (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/performance" title="performance">performance (1)</a>
+		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/places-visited" title="places-visited">places-visited (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/proxy" title="proxy">proxy (1)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/reverse-engineering" title="reverse-engineering">reverse-engineering (3)</a>
 		<a class="widget__link widget__link--taglist" href="https://venishjoe.net/tags/rsa" title="rsa">rsa (1)</a>
@@ -516,7 +483,7 @@ if(pointer == NULL) {
 	</div>
 		<footer class="footer" itemscope="itemscope" itemtype="http://schema.org/WPFooter">
 			<div class="container container-inner">
-				<p class="footer__copyright">&copy; 2017 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
+				<p class="footer__copyright">&copy; 2018 VENISHJOE.NET. Based on <a href="//wordpress.org/themes/mh-magazine-lite/" target="_blank" rel="nofollow noopener noreferrer">MH Magazine lite</a>.</p>
 			</div>
 		</footer>
 	</div>
